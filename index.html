@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>省界千年</title>
+    <meta
+      name="description"
+      content="用時間軸看中國省級政區自古以來的劃分與名稱變化。界線以今日省界合併示意。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <div class="brand">
+          <p class="eyebrow">中國歷史政區</p>
+          <h1>省界千年</h1>
+          <p class="tagline">由郡縣、州、道、路、行省，看到今日的省</p>
+        </div>
+        <div class="tools">
+          <label class="search">
+            <span class="sr">搜尋政區</span>
+            <input id="search" type="search" placeholder="搜尋，例如廣東、嶺南、行省" />
+          </label>
+          <button id="toggle-modern" type="button" aria-pressed="false">今省名</button>
+          <button id="reset-view" type="button">全圖</button>
+          <button id="play" type="button" aria-pressed="false">播放</button>
+        </div>
+      </header>
+      <div id="stage">
+        <div id="map-wrap">
+          <svg id="map" role="img" aria-label="中國歷史政區示意地圖"></svg>
+          <div id="tooltip" hidden></div>
+          <div class="cartouche" id="cartouche"></div>
+          <ul class="legend">
+            <li><i class="swatch solid"></i>內地郡、州、省</li>
+            <li><i class="swatch pale"></i>都護、羈縻、將軍</li>
+            <li><i class="swatch hatch"></i>一省分屬兩邊</li>
+            <li><i class="swatch plain"></i>未設這級政區</li>
+          </ul>
+          <p id="status" class="status">正在展開地圖…</p>
+        </div>
+        <aside id="panel" aria-live="polite"></aside>
+      </div>
+      <footer id="timeline"></footer>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
