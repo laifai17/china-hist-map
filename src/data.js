@@ -37,6 +37,29 @@ export const PROVINCES = [
   { adcode: 820000, name: "澳門", full: "澳門特別行政區", level: "特別行政區", color: "#a36b4a" },
 ];
 
+export const CUTS = {
+  huai: [[112.0, 32.1], [114.1, 32.45], [116.2, 32.9], [117.6, 33.1], [119.3, 33.6], [121.2, 34.2]],
+  baigou: [[113.2, 39.7], [114.6, 39.4], [116.0, 39.1], [117.6, 39.15], [119.6, 39.0]],
+  yanmen: [[110.6, 39.7], [112.0, 39.4], [113.2, 39.15], [114.8, 39.5]],
+  qinling: [[105.4, 33.9], [107.0, 34.15], [108.8, 33.7], [110.3, 33.45], [111.6, 33.2]],
+};
+
+export const REALM_COLORS = {
+  秦: "#b85c38",
+  漢: "#a3543c",
+  唐: "#b85c38",
+  宋: "#1f6f8a",
+  南宋: "#1f7e8c",
+  遼: "#3d5f86",
+  金: "#a56b2a",
+  西夏: "#8e9360",
+  元: "#3e6f8c",
+  明: "#8e2f2f",
+  清: "#8e2f2f",
+  民國: "#3e6f8c",
+  今日: "#9a3b32",
+};
+
 const C = {
   guan: "#b85c38",
   yu: "#d09a3a",
@@ -281,14 +304,15 @@ const HISTORICAL = [
     system: "路",
     tick: "宋遼",
     headline: "燕雲在遼，河西在西夏",
-    body: "北宋把唐的道改成路，例如兩浙路、福建路、廣南東路。但今日的北京不在宋境：燕雲是遼的南京析津府。河西是西夏，雲南是大理。河北一省當時被宋、遼分佔，所以畫成斜線。",
+    body: "北宋把唐的道改成路，例如兩浙路、福建路、廣南東路。但今日的北京不在宋境：燕雲是遼的南京析津府。河西是西夏，雲南是大理。河北沿白溝河切開，山西沿雁門一帶切開，不再跟今日省界走。",
     units: [
       { id: "sl-nanjing", name: "遼南京道", short: "遼南京", kind: "core", color: C.liao, adcodes: [110000, 120000], note: "析津府，就是後來的北京。對宋人來說這是燕雲故地。" },
       { id: "sl-dongjing", name: "遼東京道", short: "遼東京", kind: "core", color: "#2f4f73", adcodes: [210000], note: "遼陽一帶。" },
       { id: "sl-shangjing", name: "遼上京道", short: "遼上京", kind: "core", color: C.hei, adcodes: [220000, 230000, 150000], note: "上京臨潢府在今內蒙古巴林左旗。圖上把東北和內蒙古併在一起，只表示同屬遼的北部。" },
       { id: "sl-jingdong", name: "京東路", short: "京東", kind: "core", color: C.qi, adcodes: [370000], note: "北宋京東東路、京東西路，約今日山東。" },
       { id: "sl-jingxi", name: "京畿、京西路", short: "京西", kind: "core", color: C.yu, adcodes: [410000], note: "開封是京畿。京西北、京西南路延伸到襄鄧。" },
-      { id: "sl-hedong", name: "宋河東／遼西京", short: "河東", kind: "split", color: C.jin, adcodes: [140000], note: "太原屬宋河東路，大同（雲州）屬遼西京道。" },
+      { id: "sl-shanxi-n", name: "遼西京道", short: "遼西京", kind: "core", color: "#35557a", adcodes: [], clips: [{ adcode: 140000, cut: "yanmen", side: "north" }], note: "大同、雲州在雁門以北，屬遼。" },
+      { id: "sl-hedong-s", name: "宋河東路", short: "宋河東", kind: "core", color: C.jin, adcodes: [], clips: [{ adcode: 140000, cut: "yanmen", side: "south" }], note: "太原在雁門以南，屬宋。" },
       { id: "sl-shanxi", name: "永興軍、秦鳳路", short: "陝西", kind: "core", color: C.guan, adcodes: [610000], note: "北宋習慣把這一片稱作陝西。北緣與西夏相接。" },
       { id: "sl-huainan", name: "淮南東、西路", short: "淮南", kind: "core", color: C.huai, adcodes: [320000, 340000], note: "皖南實際上多屬江南東路，圖上沒有拆開安徽。" },
       { id: "sl-liangzhe", name: "兩浙路", short: "兩浙", kind: "core", color: C.wu, adcodes: [330000, 310000], note: "含今天的上海。" },
@@ -300,7 +324,8 @@ const HISTORICAL = [
       { id: "sl-guangnan-e", name: "廣南東路", short: "廣南東", kind: "core", color: C.yue, adcodes: [440000, 810000, 820000], note: "廣州。海南不在這一路。" },
       { id: "sl-guangnan-w", name: "廣南西路", short: "廣南西", kind: "core", color: C.gui, adcodes: [450000, 460000], note: "桂林和瓊管。海南屬廣南西路。" },
       { id: "sl-qian", name: "夔州路南部", short: "黔", kind: "frontier", color: C.qian, adcodes: [520000], note: "宋對貴州多是羈縻州，不是內地正州。" },
-      { id: "sl-hebei", name: "宋河北路／遼南京", short: "宋／遼", kind: "split", color: C.ji, adcodes: [130000], note: "白溝河以南大致屬宋，以北屬遼。今日河北省無法用一條省界切開。" },
+      { id: "sl-hebei-n", name: "遼南京道北部", short: "遼界北", kind: "core", color: C.liao, adcodes: [], clips: [{ adcode: 130000, cut: "baigou", side: "north" }], note: "白溝河以北屬遼，包括後世的張家口、承德一帶。" },
+      { id: "sl-hebei-s", name: "宋河北東、西路", short: "宋河北", kind: "core", color: C.ji, adcodes: [], clips: [{ adcode: 130000, cut: "baigou", side: "south" }], note: "白溝河以南屬宋，包括真定、大名一帶。" },
       { id: "sl-gansu", name: "秦鳳路／西夏", short: "宋／夏", kind: "split", color: C.long, adcodes: [620000], note: "隴南、秦州一帶屬宋，河西走廊屬西夏。" },
       { id: "sl-xia", name: "西夏", short: "西夏", kind: "core", color: C.xia, adcodes: [640000], note: "都興慶府，在今日銀川。" },
       { id: "sl-dali", name: "大理", short: "大理", kind: "core", color: C.dian, adcodes: [530000], note: "937年以來的大理國，宋朝沒有把雲南設路。" },
@@ -324,7 +349,8 @@ const HISTORICAL = [
       { id: "sj-shandong", name: "金山東路", short: "金山東", kind: "core", color: "#c48a3a", adcodes: [370000], note: "山東東路、山東西路。" },
       { id: "sj-hedong", name: "金河東路", short: "金河東", kind: "core", color: C.jin, adcodes: [140000], note: "河東北路、河東南路。" },
       { id: "sj-nanjing", name: "金南京路", short: "金南京", kind: "core", color: C.yu, adcodes: [410000], note: "開封在金朝叫南京。" },
-      { id: "sj-shanxi", name: "金京兆路", short: "金陝西", kind: "core", color: C.guan, adcodes: [610000], note: "關中屬金。漢中一帶仍屬南宋利州路。" },
+      { id: "sj-shanxi", name: "金京兆路", short: "金陝西", kind: "core", color: C.guan, adcodes: [], clips: [{ adcode: 610000, cut: "qinling", side: "north" }], note: "秦嶺、大散關以北的關中屬金。" },
+      { id: "sj-hanzhong", name: "南宋利州路", short: "利州", kind: "core", color: "#6d4570", adcodes: [], clips: [{ adcode: 610000, cut: "qinling", side: "south" }], note: "漢中在秦嶺以南，仍屬南宋。" },
       { id: "sj-shangjing", name: "金上京、東京路", short: "金東北", kind: "core", color: C.hei, adcodes: [210000, 220000, 230000], note: "金的龍興之地。上京會寧府在今哈爾濱阿城。" },
       { id: "sj-meng", name: "金西北路邊", short: "金邊", kind: "frontier", color: C.sai, adcodes: [150000], note: "金設招討司。更北的蒙古諸部即將崛起，1206年鐵木真才稱成吉思汗。" },
       { id: "sj-liangzhe", name: "兩浙路", short: "兩浙", kind: "core", color: C.wu, adcodes: [330000, 310000], note: "南宋行在臨安，在今日杭州。" },
@@ -336,7 +362,8 @@ const HISTORICAL = [
       { id: "sj-guangnan-e", name: "廣南東路", short: "廣南東", kind: "core", color: C.yue, adcodes: [440000, 810000, 820000], note: "廣州。" },
       { id: "sj-guangnan-w", name: "廣南西路", short: "廣南西", kind: "core", color: C.gui, adcodes: [450000, 460000], note: "桂林、雷瓊。" },
       { id: "sj-qian", name: "羈縻州", short: "羈縻", kind: "frontier", color: C.qian, adcodes: [520000], note: "貴州仍多羈縻，不是南宋的內地州。" },
-      { id: "sj-huai", name: "金宋分界", short: "淮河", kind: "split", color: C.huai, adcodes: [320000, 340000], note: "和議以淮河為界。今日江蘇、安徽都被淮河切成兩半。" },
+      { id: "sj-huai-n", name: "金淮北", short: "金淮北", kind: "core", color: C.jinDyn, adcodes: [], clips: [{ adcode: 320000, cut: "huai", side: "north" }, { adcode: 340000, cut: "huai", side: "north" }], note: "淮河以北歸金。今日江蘇、安徽在這裡被切開。" },
+      { id: "sj-huai-s", name: "南宋淮南東、西路", short: "淮南", kind: "core", color: C.huai, adcodes: [], clips: [{ adcode: 320000, cut: "huai", side: "south" }, { adcode: 340000, cut: "huai", side: "south" }], note: "淮河以南歸南宋。" },
       { id: "sj-xia-ning", name: "西夏", short: "西夏", kind: "core", color: C.xia, adcodes: [640000], note: "夏仁宗在位，國勢仍穩。" },
       { id: "sj-xia-gan", name: "西夏河西", short: "河西", kind: "core", color: "#c4924a", adcodes: [620000], note: "涼州、甘州、肅州屬西夏。隴南一部仍可能屬宋，省界畫不開。" },
       { id: "sj-dali", name: "大理", short: "大理", kind: "core", color: C.dian, adcodes: [530000], note: "大理仍在，1253年才為蒙古所滅。" },
@@ -505,6 +532,7 @@ function presentEra() {
       short: province.name,
       kind: "core",
       color: province.color,
+      realm: "今日",
       adcodes: [province.adcode],
       note: province.level,
     })),
@@ -520,17 +548,31 @@ export function validate(eras = ERAS, provinces = PROVINCES) {
   for (const era of eras) {
     if (eraIds.has(era.id)) errors.push(`重複時代 ${era.id}`);
     eraIds.add(era.id);
-    const seen = new Map();
+    const whole = new Map();
+    const clips = new Map();
     for (const unit of era.units) {
-      if (!unit.adcodes?.length) errors.push(`${era.id} ${unit.id} 沒有範圍`);
-      for (const code of unit.adcodes) {
+      if (!unit.adcodes?.length && !unit.clips?.length) errors.push(`${era.id} ${unit.id} 沒有範圍`);
+      for (const code of unit.adcodes || []) {
         if (!codes.has(code)) errors.push(`${era.id} 未知代碼 ${code}`);
-        if (seen.has(code)) errors.push(`${era.id} 重複 ${code}（${seen.get(code)} / ${unit.name}）`);
-        seen.set(code, unit.name);
+        if (whole.has(code) || clips.has(code)) errors.push(`${era.id} 重複 ${code}`);
+        whole.set(code, unit.name);
+      }
+      for (const clip of unit.clips || []) {
+        if (!codes.has(clip.adcode)) errors.push(`${era.id} 未知代碼 ${clip.adcode}`);
+        if (!CUTS[clip.cut]) errors.push(`${era.id} 未知分界 ${clip.cut}`);
+        if (whole.has(clip.adcode)) errors.push(`${era.id} ${clip.adcode} 既整省又切開`);
+        const key = `${clip.adcode}:${clip.side}`;
+        if (clips.has(key)) errors.push(`${era.id} 重複切開 ${key}`);
+        clips.set(key, clip.cut);
       }
     }
     for (const code of codes) {
-      if (!seen.has(code)) errors.push(`${era.id} 缺少 ${code}`);
+      if (whole.has(code)) continue;
+      const north = clips.get(`${code}:north`);
+      const south = clips.get(`${code}:south`);
+      if (!north && !south) errors.push(`${era.id} 缺少 ${code}`);
+      else if (!north || !south) errors.push(`${era.id} ${code} 只切了一半`);
+      else if (north !== south) errors.push(`${era.id} ${code} 兩邊用了不同分界`);
     }
   }
   return errors;
@@ -544,16 +586,27 @@ export function unitFor(era, adcode) {
   return era.units.find((unit) => unit.adcodes.includes(Number(adcode)));
 }
 
+export function unitCodes(unit) {
+  const codes = [...(unit.adcodes || [])];
+  for (const clip of unit.clips || []) {
+    if (!codes.includes(clip.adcode)) codes.push(clip.adcode);
+  }
+  return codes;
+}
+
+export function partsFor(era, adcode) {
+  const code = Number(adcode);
+  const whole = era.units.find((unit) => unit.adcodes.includes(code));
+  if (whole) return [{ unit: whole, where: "" }];
+  return era.units.flatMap((unit) => (unit.clips || [])
+    .filter((clip) => clip.adcode === code)
+    .map((clip) => ({ unit, where: clip.side === "north" ? "北" : "南" })));
+}
+
 export function summarizeChanges(previous, current) {
   if (!previous) return [];
-  const previousByCode = new Map();
-  const currentByCode = new Map();
-  for (const unit of previous.units) {
-    for (const code of unit.adcodes) previousByCode.set(code, unit);
-  }
-  for (const unit of current.units) {
-    for (const code of unit.adcodes) currentByCode.set(code, unit);
-  }
+  const previousByCode = indexOwners(previous);
+  const currentByCode = indexOwners(current);
 
   const messages = [];
   for (const oldUnit of previous.units) {
@@ -601,6 +654,74 @@ export function summarizeChanges(previous, current) {
   }
   return lines;
 }
+
+function indexOwners(era) {
+  const map = new Map();
+  for (const unit of era.units) {
+    for (const code of unit.adcodes || []) map.set(code, unit);
+  }
+  const grouped = new Map();
+  for (const unit of era.units) {
+    for (const clip of unit.clips || []) {
+      if (!grouped.has(clip.adcode)) grouped.set(clip.adcode, []);
+      grouped.get(clip.adcode).push(unit.name);
+    }
+  }
+  for (const [code, names] of grouped) {
+    map.set(code, { name: names.join("／"), adcodes: [code] });
+  }
+  return map;
+}
+
+const REALM_MEMBERS = {
+  qin: { 秦: ["qin-core", "qin-long", "qin-qian"] },
+  han: { 漢: ["han-sili", "han-yu", "han-ji", "han-qing", "han-xu", "han-jing", "han-yang", "han-yi", "han-liang", "han-bing", "han-you", "han-jiao"] },
+  tang: { 唐: ["tang-jingji", "tang-duji", "tang-guannei", "tang-henan", "tang-hedong", "tang-hebei", "tang-shannan-e", "tang-shannan-w", "tang-longyou", "tang-huainan", "tang-jiangnan-e", "tang-jiangnan-w", "tang-qian", "tang-jiannan", "tang-lingnan"] },
+  "song-liao": {
+    遼: ["sl-nanjing", "sl-dongjing", "sl-shangjing", "sl-shanxi-n", "sl-hebei-n"],
+    宋: ["sl-jingdong", "sl-jingxi", "sl-hedong-s", "sl-shanxi", "sl-huainan", "sl-liangzhe", "sl-fujian", "sl-jiangnan", "sl-jinghu-n", "sl-jinghu-s", "sl-chuan", "sl-guangnan-e", "sl-guangnan-w", "sl-qian", "sl-hebei-s"],
+    西夏: ["sl-xia"],
+  },
+  "song-jin": {
+    金: ["sj-zhongdu", "sj-shandong", "sj-hedong", "sj-nanjing", "sj-shanxi", "sj-shangjing", "sj-meng", "sj-huai-n"],
+    南宋: ["sj-liangzhe", "sj-fujian", "sj-jiangnan", "sj-jinghu-n", "sj-jinghu-s", "sj-chuan", "sj-guangnan-e", "sj-guangnan-w", "sj-qian", "sj-huai-s", "sj-hanzhong"],
+    西夏: ["sj-xia-ning", "sj-xia-gan"],
+  },
+  ming: { 明: ["ming-bei", "ming-nan", "ming-lu", "ming-jin", "ming-yu", "ming-shan", "ming-shu", "ming-gan", "ming-huguang", "ming-zhe", "ming-min", "ming-yue", "ming-gui", "ming-dian", "ming-qian", "ming-liaodong"] },
+};
+
+function assignRealms(eras) {
+  for (const era of eras) {
+    if (era.id === "qing") {
+      for (const unit of era.units) unit.realm = "清";
+      continue;
+    }
+    if (era.id === "yuan") {
+      for (const unit of era.units) {
+        if (unit.id !== "yuan-chagatai" && unit.id !== "yuan-tai") unit.realm = "元";
+      }
+      continue;
+    }
+    if (era.id === "roc") {
+      for (const unit of era.units) {
+        if (!["roc-hk", "roc-mo", "roc-zang"].includes(unit.id)) unit.realm = "民國";
+      }
+      continue;
+    }
+    const members = REALM_MEMBERS[era.id];
+    if (!members) continue;
+    const realmById = new Map();
+    for (const [realm, ids] of Object.entries(members)) {
+      for (const id of ids) realmById.set(id, realm);
+    }
+    for (const unit of era.units) {
+      const realm = realmById.get(unit.id);
+      if (realm) unit.realm = realm;
+    }
+  }
+}
+
+assignRealms(ERAS);
 
 function joinNames(names) {
   const shown = names.slice(0, 4).join("、");

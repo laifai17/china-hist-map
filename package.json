@@ -1,5 +1,6 @@
 {
   "name": "china-hist-map",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +10,8 @@
     "check": "node src/validate.js"
   },
   "dependencies": {
-    "d3-geo": "^3.1.1"
+    "d3-geo": "^3.1.1",
+    "polygon-clipping": "^0.15.7"
   },
   "devDependencies": {
     "vite": "^6.3.5"
