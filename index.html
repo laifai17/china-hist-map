@@ -29,6 +29,8 @@
             <span class="sr">搜尋政區</span>
             <input id="search" type="search" placeholder="搜尋，例如廣東、嶺南、行省" />
           </label>
+          <button id="toggle-bounds" type="button" aria-pressed="false">今省界</button>
+          <button id="toggle-realm" type="button" aria-pressed="false">成個國</button>
           <button id="toggle-modern" type="button" aria-pressed="false">今省名</button>
           <button id="reset-view" type="button">全圖</button>
           <button id="play" type="button" aria-pressed="false">播放</button>
@@ -42,7 +44,7 @@
           <ul class="legend">
             <li><i class="swatch solid"></i>內地郡、州、省</li>
             <li><i class="swatch pale"></i>都護、羈縻、將軍</li>
-            <li><i class="swatch hatch"></i>一省分屬兩邊</li>
+            <li><i class="swatch hatch"></i>今日省界（虛線）</li>
             <li><i class="swatch plain"></i>未設這級政區</li>
           </ul>
           <p id="status" class="status">正在展開地圖…</p>

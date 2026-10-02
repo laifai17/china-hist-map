@@ -1,9 +1,14 @@
-import { geoMercator, geoPath } from "d3-geo";
+import { geoCentroid, geoMercator, geoPath } from "d3-geo";
+import polygonClipping from "polygon-clipping";
 import {
+  CUTS,
   ERAS,
+  LAND_LABEL,
+  REALM_COLORS,
+  partsFor,
   provinceByCode,
   summarizeChanges,
-  unitFor,
+  unitCodes,
   validate,
 } from "./data.js";
 
@@ -17,6 +22,8 @@ const cartouche = document.querySelector("#cartouche");
 const statusEl = document.querySelector("#status");
 const searchInput = document.querySelector("#search");
 const modernButton = document.querySelector("#toggle-modern");
+const boundsButton = document.querySelector("#toggle-bounds");
+const realmButton = document.querySelector("#toggle-realm");
 const playButton = document.querySelector("#play");
 const resetButton = document.querySelector("#reset-view");
 
@@ -24,9 +31,11 @@ const state = {
   eraIndex: initialEra(),
   selectedAdcode: null,
   selectedUnitId: null,
-  hoverCodes: new Set(),
+  hoverUnitId: null,
   query: "",
   showModern: false,
+  showModernBounds: false,
+  showRealm: false,
   playing: false,
   timer: 0,
 };
@@ -35,6 +44,17 @@ const view = { x: 0, y: 0, k: 1 };
 let projection = geoMercator();
 let path = geoPath(projection);
 let features = [];
+const featureByCode = new Map();
+const clipCache = new Map();
+const CONTEXT_PLACES = [
+  { name: "蒙古", lon: 103, lat: 47, land: "Mongolia" },
+  { name: "朝鮮半島", lon: 128.0, lat: 38.6, land: "North Korea" },
+  { name: "日本", lon: 138, lat: 36.2, land: "Japan" },
+  { name: "越南", lon: 105.8, lat: 17.6, land: "Vietnam" },
+  { name: "哈薩克", lon: 76, lat: 44.2, land: "" },
+];
+let contextFeatures = [];
+let pieces = [];
 let width = 800;
 let height = 600;
 let drag = null;
@@ -52,16 +72,29 @@ init().catch((error) => {
 });
 
 async function init() {
-  const response = await fetch(`${import.meta.env.BASE_URL}china.json`);
+  const [response, asiaResponse] = await Promise.all([
+    fetch(`${import.meta.env.BASE_URL}china.json`),
+    fetch(`${import.meta.env.BASE_URL}asia.json`),
+  ]);
   if (!response.ok) throw new Error("地圖資料載入失敗");
   const geo = await response.json();
   features = geo.features.map(sanitize).filter(Boolean);
+  contextFeatures = asiaResponse.ok ? (await asiaResponse.json()).features : [];
+  featureByCode.clear();
+  for (const feature of features) featureByCode.set(feature.properties.adcode, feature);
   const viewport = el("g");
   viewport.id = "viewport";
   const sea = el("rect");
   sea.id = "sea";
-  const layer = el("g");
-  layer.id = "provinces";
+  const context = el("g");
+  context.id = "context";
+  const contextLabels = el("g");
+  contextLabels.id = "context-labels";
+  const historical = el("g");
+  historical.id = "historical";
+  const modern = el("g");
+  modern.id = "modern-lines";
+  modern.style.display = "none";
   const points = el("g");
   points.id = "points";
   const labels = el("g");
@@ -69,20 +102,26 @@ async function init() {
   const defs = el("defs");
   defs.id = "defs";
   svg.append(defs, viewport);
-  viewport.append(sea, layer, points, labels);
+  viewport.append(sea, context, contextLabels, historical, modern, points, labels);
+  for (const feature of contextFeatures) {
+    const shape = el("path");
+    shape.classList.add("context-land");
+    shape.dataset.name = feature.properties.name;
+    context.append(shape);
+  }
 
   for (const feature of features) {
-    const shape = el("path");
-    shape.classList.add("province");
-    shape.dataset.adcode = String(feature.properties.adcode);
-    layer.append(shape);
+    const line = el("path");
+    line.classList.add("modern-line");
+    line.dataset.adcode = String(feature.properties.adcode);
+    modern.append(line);
   }
 
   svg.addEventListener("pointerdown", onPointerDown);
   svg.addEventListener("pointermove", onPointerMove);
   svg.addEventListener("pointerup", onPointerUp);
   svg.addEventListener("pointerleave", () => {
-    state.hoverCodes = new Set();
+    state.hoverUnitId = null;
     hideTooltip();
     paintInteraction();
   });
@@ -93,7 +132,7 @@ async function init() {
   panel.addEventListener("mouseover", onPanelHover);
   panel.addEventListener("mouseout", (event) => {
     if (event.target.closest("[data-unit]")) {
-      state.hoverCodes = new Set();
+      state.hoverUnitId = null;
       paintInteraction();
     }
   });
@@ -107,6 +146,19 @@ async function init() {
     state.showModern = !state.showModern;
     modernButton.setAttribute("aria-pressed", String(state.showModern));
     drawLabels();
+  });
+  boundsButton.addEventListener("click", () => {
+    state.showModernBounds = !state.showModernBounds;
+    boundsButton.setAttribute("aria-pressed", String(state.showModernBounds));
+    svg.querySelector("#modern-lines").style.display = state.showModernBounds ? "" : "none";
+  });
+  realmButton.addEventListener("click", () => {
+    state.showRealm = !state.showRealm;
+    realmButton.setAttribute("aria-pressed", String(state.showRealm));
+    paintFills();
+    drawLabels();
+    renderPanel();
+    paintInteraction();
   });
   playButton.addEventListener("click", () => {
     state.playing ? stopPlay() : startPlay();
@@ -141,12 +193,21 @@ function layout() {
   projection = geoMercator();
   projection.fitExtent([[28, 28], [width - 28, height - 24]], {
     type: "FeatureCollection",
-    features,
+    features: contextFeatures.length ? contextFeatures : features,
   });
   path = geoPath(projection);
+  const lands = svg.querySelectorAll("#context .context-land");
+  contextFeatures.forEach((feature, index) => {
+    lands[index]?.setAttribute("d", path(feature));
+  });
+  drawContextLabels();
   for (const feature of features) {
-    const shape = svg.querySelector(`[data-adcode="${feature.properties.adcode}"]`);
-    shape.setAttribute("d", path(feature));
+    const line = svg.querySelector(`#modern-lines [data-adcode="${feature.properties.adcode}"]`);
+    if (line) line.setAttribute("d", path(feature));
+  }
+  for (const piece of pieces) {
+    const shape = svg.querySelector(`#historical [data-piece="${piece.key}"]`);
+    if (shape) shape.setAttribute("d", path(piece.feature));
   }
   applyView();
   drawLabels();
@@ -155,26 +216,12 @@ function layout() {
 
 function render() {
   const era = currentEra();
-  const previous = ERAS[state.eraIndex - 1];
-  const changed = new Set();
-  if (previous) {
-    for (const feature of features) {
-      const code = feature.properties.adcode;
-      const before = unitFor(previous, code);
-      const after = unitFor(era, code);
-      if (before && after && before.name !== after.name) changed.add(code);
-    }
-  }
   buildPatterns(era);
-  for (const feature of features) {
-    const code = feature.properties.adcode;
-    const unit = unitFor(era, code);
-    const shape = svg.querySelector(`[data-adcode="${code}"]`);
-    shape.style.fill = fillFor(era, unit);
-    shape.classList.toggle("is-changed", changed.has(code));
-  }
+  buildHistorical(era);
+  paintFills();
   drawPoints();
   drawLabels();
+  drawContextLabels();
   paintInteraction();
   renderCartouche();
   renderPanel();
@@ -185,41 +232,112 @@ function render() {
   document.title = `${era.dynasty} ${era.yearText} · 省界千年`;
 }
 
-function paintInteraction() {
-  const era = currentEra();
-  const selected = selectedCodes();
-  const queryCodes = matchCodes(state.query);
-  const active = state.hoverCodes.size
-    ? state.hoverCodes
-    : selected.size
-      ? selected
-      : queryCodes;
-  const dim = active.size > 0;
-  for (const feature of features) {
-    const code = feature.properties.adcode;
-    const shape = svg.querySelector(`[data-adcode="${code}"]`);
-    const on = active.has(code);
-    shape.classList.toggle("is-dim", dim && !on);
-    shape.classList.toggle("is-selected", selected.has(code));
-    shape.classList.toggle("is-hover", state.hoverCodes.has(code));
+function buildHistorical(era) {
+  const layer = svg.querySelector("#historical");
+  layer.replaceChildren();
+  pieces = [];
+  let index = 0;
+  for (const unit of era.units) {
+    for (const code of unit.adcodes || []) {
+      const feature = featureByCode.get(code);
+      if (feature) pieces.push(makePiece(unit, code, "", feature.geometry, index++));
+    }
+    for (const clip of unit.clips || []) {
+      const feature = featureByCode.get(clip.adcode);
+      if (!feature) continue;
+      const geometry = clippedGeometry(clip.adcode, feature.geometry, clip.cut, clip.side);
+      pieces.push(makePiece(unit, clip.adcode, clip.side, geometry, index++));
+    }
   }
-  for (const row of panel.querySelectorAll("[data-unit]")) {
-    const codes = row.dataset.codes.split(",").map(Number);
-    row.classList.toggle("is-on", codes.some((code) => selected.has(code) || state.hoverCodes.has(code)));
+  for (const piece of pieces) {
+    const shape = el("path");
+    shape.classList.add("province");
+    shape.dataset.piece = piece.key;
+    shape.dataset.unit = piece.unitId;
+    shape.dataset.adcode = String(piece.adcode);
+    shape.dataset.where = piece.where;
+    shape.setAttribute("d", path(piece.feature));
+    layer.append(shape);
   }
 }
 
-function selectedCodes() {
+function makePiece(unit, adcode, where, geometry, index) {
+  return {
+    key: String(index),
+    unitId: unit.id,
+    adcode,
+    where,
+    feature: { type: "Feature", properties: {}, geometry },
+  };
+}
+
+function paintFills() {
   const era = currentEra();
-  if (state.selectedUnitId) {
-    const unit = era.units.find((item) => item.id === state.selectedUnitId);
-    return new Set(unit ? unit.adcodes : []);
+  for (const shape of svg.querySelectorAll("#historical .province")) {
+    const unit = era.units.find((item) => item.id === shape.dataset.unit);
+    const fill = fillFor(era, unit);
+    shape.style.fill = fill;
+    shape.style.stroke = unit?.kind === "split" ? unit.color : fill;
   }
-  if (state.selectedAdcode) {
-    const unit = unitFor(era, state.selectedAdcode);
-    return new Set(unit ? unit.adcodes : [state.selectedAdcode]);
+  paintContext();
+}
+
+function paintContext() {
+  const era = currentEra();
+  for (const shape of svg.querySelectorAll("#context .context-land")) {
+    const unit = landUnit(era, shape.dataset.name);
+    shape.classList.toggle("is-claimed", Boolean(unit));
+    if (!unit) {
+      delete shape.dataset.unit;
+      shape.style.fill = "";
+      shape.style.stroke = "";
+      continue;
+    }
+    const fill = state.showRealm && unit.realm && REALM_COLORS[unit.realm]
+      ? REALM_COLORS[unit.realm]
+      : unit.color;
+    shape.dataset.unit = unit.id;
+    shape.style.fill = fill;
+    shape.style.stroke = fill;
   }
-  return new Set();
+}
+
+function landUnit(era, name) {
+  return era.units.find((unit) => unit.lands?.includes(name));
+}
+
+function paintInteraction() {
+  const active = highlightedUnitIds();
+  const dim = active.size > 0;
+  for (const shape of svg.querySelectorAll("#historical .province, #context .context-land.is-claimed")) {
+    const on = active.has(shape.dataset.unit);
+    shape.classList.toggle("is-dim", dim && !on);
+    shape.classList.toggle("is-selected", on && (state.selectedUnitId || state.hoverUnitId));
+  }
+  for (const row of panel.querySelectorAll("[data-unit]")) {
+    row.classList.toggle("is-on", active.has(row.dataset.unit));
+  }
+}
+
+function highlightedUnitIds() {
+  const era = currentEra();
+  const ids = new Set();
+  const add = (unit) => {
+    if (!unit) return;
+    if (state.showRealm && unit.realm) {
+      for (const item of era.units) {
+        if (item.realm === unit.realm) ids.add(item.id);
+      }
+    } else {
+      ids.add(unit.id);
+    }
+  };
+  if (state.hoverUnitId) add(era.units.find((item) => item.id === state.hoverUnitId));
+  else if (state.selectedUnitId) add(era.units.find((item) => item.id === state.selectedUnitId));
+  else if (state.query) {
+    for (const unit of filterUnits(era, state.query)) add(unit);
+  }
+  return ids;
 }
 
 function renderCartouche() {
@@ -248,32 +366,52 @@ function renderPanel() {
     <p class="story">${esc(era.body)}</p>
     ${changes.length ? `<section class="panel-block"><h3>相對上一時期</h3><ul class="changes">${changes.map((line) => `<li>${esc(line)}</li>`).join("")}</ul></section>` : ""}
     <section class="panel-block">
-      <h3>這一時期的區劃</h3>
-      ${units.length ? `<ul class="units">${units.map(unitRow).join("")}</ul>` : `<p class="hint">這一時期沒有「${esc(state.query)}」。</p>`}
+      <h3>${state.showRealm ? "政權同下面的區劃" : "這一時期的區劃"}</h3>
+      ${units.length ? unitList(units) : `<p class="hint">這一時期沒有「${esc(state.query)}」。</p>`}
       ${elsewhere ? `<button class="jump" type="button" data-goto-era="${elsewhere.id}">去${esc(elsewhere.dynasty)}看「${esc(state.query)}」</button>` : ""}
     </section>
-    <p class="hint">點地圖上的省，看這塊地方歷代叫什麼。滾輪放大，拖動可平移。</p>
+    <p class="hint">${state.showRealm ? "地圖已收成一個政權的範圍，下面仍列出當時的路、省。" : "點地圖上的地方，看這塊地歷代叫什麼。滾輪放大，拖動可平移。"}</p>
     ${disclaimer()}
   `;
+}
+
+function unitList(units) {
+  if (!state.showRealm) return `<ul class="units">${units.map(unitRow).join("")}</ul>`;
+  const groups = new Map();
+  const loose = [];
+  for (const unit of units) {
+    if (!unit.realm) {
+      loose.push(unit);
+      continue;
+    }
+    if (!groups.has(unit.realm)) groups.set(unit.realm, []);
+    groups.get(unit.realm).push(unit);
+  }
+  const blocks = [...groups.entries()].map(([title, list]) => ({ title, list }));
+  if (loose.length) blocks.push({ title: "界外", list: loose });
+  return blocks.map((block) => `
+    <h4 class="realm-title">${esc(block.title)}</h4>
+    <ul class="units">${block.list.map(unitRow).join("")}</ul>
+  `).join("");
 }
 
 function renderLineage() {
   const province = provinceByCode(state.selectedAdcode);
   const era = currentEra();
   const rows = ERAS.map((item) => {
-    const unit = unitFor(item, province.adcode);
-    const mates = unit.adcodes
-      .filter((code) => code !== province.adcode)
-      .map((code) => provinceByCode(code).name);
-    const mateText = mates.length > 5
-      ? `${mates.slice(0, 5).join("、")}等 ${mates.length} 處`
-      : mates.join("、");
+    const parts = partsFor(item, province.adcode);
+    const label = parts.map((part) => (part.where ? `${part.where}：${part.unit.short || part.unit.name}` : (part.unit.short || part.unit.name))).join("　");
+    const detail = parts.map((part) => {
+      const mates = mateText(part.unit, province.adcode);
+      return `${part.where ? `${part.where}：` : ""}${part.unit.name}${part.unit.note ? `。${part.unit.note}` : ""}${mates ? ` 同屬：${mates}` : ""}`;
+    }).join(" ");
+    const swatch = parts[0] ? swatchStyle(item, parts[0].unit) : "background:#e4d8c4";
     return `
       <li>
         <button type="button" data-era-jump="${item.id}" class="${item.id === era.id ? "is-on" : ""}">
-          <i class="swatch" style="${swatchStyle(item, unit)}"></i>
-          <span><b>${esc(item.yearText)} ${esc(item.dynasty)}</b>　${esc(unit.short || unit.name)}</span>
-          <small>${esc(unit.name)}${unit.note ? `。${esc(unit.note)}` : ""}${mateText ? ` 同屬：${esc(mateText)}` : ""}</small>
+          <i class="swatch" style="${swatch}"></i>
+          <span><b>${esc(item.yearText)} ${esc(item.dynasty)}</b>　${esc(label || "未載")}</span>
+          <small>${esc(detail)}</small>
         </button>
       </li>`;
   }).join("");
@@ -281,17 +419,27 @@ function renderLineage() {
     <button class="back" type="button" data-back>返回這一時期</button>
     <p class="kicker">${esc(province.level)}</p>
     <h2>${esc(province.full)}</h2>
-    <p class="story">下面是同一塊今日省界，在各個年代被劃進哪個名字。斜線代表當時這一省裡其實有分界。</p>
+    <p class="story">下面是今日這塊地，在各個年代被劃進哪個名字。一省被切開時，會分南北兩邊寫。</p>
     <ul class="lineage">${rows}</ul>
     ${disclaimer()}
   `;
 }
 
+function mateText(unit, adcode) {
+  const mates = unitCodes(unit)
+    .filter((code) => code !== adcode)
+    .map((code) => provinceByCode(code).name);
+  if (!mates.length) return "";
+  if (mates.length > 5) return `${mates.slice(0, 5).join("、")}等 ${mates.length} 處`;
+  return mates.join("、");
+}
+
 function unitRow(unit) {
-  const names = unit.adcodes.map((code) => provinceByCode(code).name).join("、");
+  const lands = [...new Set((unit.lands || []).map((name) => LAND_LABEL[name] || name))];
+  const names = [...unitCodes(unit).map((code) => provinceByCode(code).name), ...lands].join("、");
   return `
     <li>
-      <button class="unit" type="button" data-unit="${esc(unit.id)}" data-codes="${unit.adcodes.join(",")}">
+      <button class="unit" type="button" data-unit="${esc(unit.id)}">
         <i class="swatch" style="${swatchStyle(currentEra(), unit)}"></i>
         <span>${esc(unit.name)}</span>
         <small>${esc(names)}${unit.note ? `。${esc(unit.note)}` : ""}</small>
@@ -314,28 +462,59 @@ function renderTimeline() {
   `;
 }
 
+function drawContextLabels() {
+  const layer = svg.querySelector("#context-labels");
+  if (!layer) return;
+  layer.replaceChildren();
+  const era = currentEra();
+  for (const place of CONTEXT_PLACES) {
+    if (place.land && landUnit(era, place.land)) continue;
+    const projected = projection([place.lon, place.lat]);
+    if (!projected) continue;
+    const label = el("text");
+    label.classList.add("context-label");
+    label.setAttribute("x", projected[0]);
+    label.setAttribute("y", projected[1]);
+    label.textContent = place.name;
+    layer.append(label);
+  }
+}
+
 function drawLabels() {
   const layer = svg.querySelector("#labels");
   layer.replaceChildren();
   const era = currentEra();
   const placed = [];
   const candidates = [];
-  for (const unit of era.units) {
-    const text = unit.short || unit.name;
-    const members = features.filter((feature) => unit.adcodes.includes(feature.properties.adcode));
-    if (!members.length) continue;
-    const separate = unit.kind === "outer" || unit.kind === "split" || members.length === 1;
-    const anchors = separate ? members : [largest(members)];
-    for (const feature of anchors) {
-      const center = feature.properties.center;
-      if (!center) continue;
-      const [x, y] = projection(center);
+  if (state.showRealm) {
+    const seen = new Set();
+    for (const unit of era.units) {
+      if (!unit.realm || seen.has(unit.realm)) continue;
+      seen.add(unit.realm);
+      const anchor = anchorOf(era.units.filter((item) => item.realm === unit.realm));
+      if (!anchor) continue;
+      const [x, y] = projection(anchor);
+      candidates.push({ x, y, text: unit.realm, size: 20, priority: 1e14, modern: false });
+    }
+    for (const unit of era.units) {
+      if (unit.realm) continue;
+      const anchor = anchorOf([unit]);
+      if (!anchor) continue;
+      const [x, y] = projection(anchor);
+      candidates.push({ x, y, text: unit.short || unit.name, size: 13, priority: 1e11, modern: false });
+    }
+  } else {
+    for (const unit of era.units) {
+      const anchor = anchorOf([unit]);
+      if (!anchor) continue;
+      const [x, y] = projection(anchor);
+      const broad = unitCodes(unit).length > 1 && unit.kind !== "outer" && unit.kind !== "split";
       candidates.push({
         x,
         y,
-        text,
-        size: members.length > 1 && !separate ? 16 : 13,
-        priority: areaOf(feature) + (separate ? 0 : 1e12),
+        text: unit.short || unit.name,
+        size: broad ? 16 : 13,
+        priority: broad ? 1e12 : 1e10,
         modern: false,
       });
     }
@@ -407,7 +586,7 @@ function drawPoints() {
 
 function scaleLabels() {
   const k = view.k;
-  for (const label of svg.querySelectorAll(".map-label")) {
+  for (const label of svg.querySelectorAll(".map-label, .context-label")) {
     const x = label.getAttribute("x");
     const y = label.getAttribute("y");
     label.setAttribute("transform", `translate(${x} ${y}) scale(${1 / k}) translate(${-x} ${-y})`);
@@ -443,6 +622,9 @@ function buildPatterns(era) {
 
 function fillFor(era, unit) {
   if (!unit || unit.kind === "outer") return "#e4d8c4";
+  if (state.showRealm && unit.realm && REALM_COLORS[unit.realm] && unit.kind !== "split") {
+    return REALM_COLORS[unit.realm];
+  }
   if (unit.kind === "split") return `url(#${patternId(unit)})`;
   if (unit.kind === "frontier") return mix(unit.color, 0.4);
   return unit.color;
@@ -457,7 +639,7 @@ function onMapClick(event) {
     suppressClick = false;
     return;
   }
-  const shape = event.target.closest(".province");
+  const shape = event.target.closest(".province, .context-land.is-claimed");
   if (!shape) {
     state.selectedAdcode = null;
     state.selectedUnitId = null;
@@ -467,8 +649,8 @@ function onMapClick(event) {
     paintInteraction();
     return;
   }
-  state.selectedAdcode = Number(shape.dataset.adcode);
-  state.selectedUnitId = unitFor(currentEra(), state.selectedAdcode)?.id || null;
+  state.selectedAdcode = shape.dataset.adcode ? Number(shape.dataset.adcode) : null;
+  state.selectedUnitId = shape.dataset.unit;
   state.query = "";
   searchInput.value = "";
   renderPanel();
@@ -482,20 +664,34 @@ function onPointerDown(event) {
 }
 
 function onPointerMove(event) {
-  const shape = event.target.closest(".province");
+  const shape = event.target.closest(".province, .context-land.is-claimed");
   const dot = event.target.closest(".qin-point");
   if (dot) {
     showTooltip(event, `<strong>${esc(dot.dataset.name)}</strong><p>${esc(dot.dataset.seat)}${dot.dataset.note ? `。${esc(dot.dataset.note)}` : ""}</p>`);
   } else if (shape && !drag?.moved) {
-    const code = Number(shape.dataset.adcode);
-    const province = provinceByCode(code);
-    const unit = unitFor(currentEra(), code);
-    const mates = unit.adcodes.map((item) => provinceByCode(item).name).join("、");
-    showTooltip(event, `<strong>${esc(province.full)}</strong><p>${esc(currentEra().dynasty)} · ${esc(unit.name)}</p><p>今日範圍對應：${esc(mates)}</p>${unit.note ? `<p>${esc(unit.note)}</p>` : ""}`);
-    state.hoverCodes = new Set([code]);
-    paintInteraction();
+    const unit = currentEra().units.find((item) => item.id === shape.dataset.unit);
+    if (!shape.dataset.adcode) {
+      const place = LAND_LABEL[shape.dataset.name] || shape.dataset.name;
+      const realm = state.showRealm && unit.realm ? `${unit.realm} · ` : "";
+      showTooltip(event, `<strong>${esc(place)}</strong><p>${esc(currentEra().dynasty)} · ${esc(realm)}${esc(unit.name)}</p>${unit.note ? `<p>${esc(unit.note)}</p>` : ""}`);
+      state.hoverUnitId = unit.id;
+      paintInteraction();
+    } else {
+      const code = Number(shape.dataset.adcode);
+      const province = provinceByCode(code);
+      const where = shape.dataset.where === "north" ? "北部" : shape.dataset.where === "south" ? "南部" : "";
+      const mates = unitCodes(unit).map((item) => provinceByCode(item).name).join("、");
+      const realm = state.showRealm && unit.realm ? `${unit.realm} · ` : "";
+      showTooltip(event, `<strong>${esc(province.full)}${where ? `（${where}）` : ""}</strong><p>${esc(currentEra().dynasty)} · ${esc(realm)}${esc(unit.name)}</p><p>今日範圍對應：${esc(mates)}</p>${unit.note ? `<p>${esc(unit.note)}</p>` : ""}`);
+      state.hoverUnitId = unit.id;
+      paintInteraction();
+    }
   } else if (!drag) {
     hideTooltip();
+    if (state.hoverUnitId) {
+      state.hoverUnitId = null;
+      paintInteraction();
+    }
   }
   if (!drag) return;
   const dx = event.clientX - drag.x;
@@ -571,7 +767,7 @@ function onPanelClick(event) {
 function onPanelHover(event) {
   const row = event.target.closest("[data-unit]");
   if (!row) return;
-  state.hoverCodes = new Set(row.dataset.codes.split(",").map(Number));
+  state.hoverUnitId = row.dataset.unit;
   paintInteraction();
 }
 
@@ -606,7 +802,8 @@ function setEra(index) {
   if (next === state.eraIndex) return;
   state.eraIndex = next;
   if (state.selectedAdcode) {
-    state.selectedUnitId = unitFor(currentEra(), state.selectedAdcode)?.id || null;
+    const parts = partsFor(currentEra(), state.selectedAdcode);
+    state.selectedUnitId = parts[0]?.unit.id || null;
   } else {
     state.selectedUnitId = null;
   }
@@ -644,19 +841,10 @@ function hideTooltip() {
 function filterUnits(era, query) {
   if (!query) return era.units;
   return era.units.filter((unit) => {
-    const modern = unit.adcodes.map((code) => provinceByCode(code).name).join("");
-    return `${unit.name}${unit.short || ""}${unit.note || ""}${modern}`.includes(query);
+    const modern = unitCodes(unit).map((code) => provinceByCode(code).name).join("");
+    const lands = (unit.lands || []).map((name) => LAND_LABEL[name] || "").join("");
+    return `${unit.name}${unit.short || ""}${unit.note || ""}${unit.realm || ""}${modern}${lands}`.includes(query);
   });
-}
-
-function matchCodes(query) {
-  if (!query) return new Set();
-  const era = currentEra();
-  const codes = new Set();
-  for (const unit of filterUnits(era, query)) {
-    for (const code of unit.adcodes) codes.add(code);
-  }
-  return codes;
 }
 
 function eraWithQuery(query, exceptId) {
@@ -664,7 +852,7 @@ function eraWithQuery(query, exceptId) {
 }
 
 function disclaimer() {
-  return `<p class="disclaimer">界線用今日省界合併，方便對照名稱，不是當時的實測疆界。一省跨兩個政區時畫成斜線。郡治位置是約數。底圖為省級界線，海南遠海島嶼沒有畫入，避免地圖被拉扁。</p>`;
+  return `<p class="disclaimer">預設畫的是當時政區。淮河、白溝、雁門、秦嶺會把今日的省切開，仍然是示意，不是實測疆界。周圍淺色土地係今日海岸。蒙古、越南、朝鮮、日本會按該時代上色，形狀仍是今日國界，不是實測疆界。中亞同西伯利亞沒有塗成任何朝代的領土。按「今省界」才疊上現代省界。按「成個國」把同一政權收成一整塊。郡治位置是約數。海南遠海島嶼沒有畫入，避免地圖被拉扁。</p>`;
 }
 
 function swatchStyle(era, unit) {
@@ -711,8 +899,65 @@ function clipGeometry(geometry) {
   return { type: "MultiPolygon", coordinates };
 }
 
-function largest(members) {
-  return members.reduce((best, feature) => (areaOf(feature) > areaOf(best) ? feature : best));
+function anchorOf(units) {
+  const ids = new Set(units.map((unit) => unit.id));
+  const geometries = pieces.filter((piece) => ids.has(piece.unitId)).map((piece) => piece.feature.geometry);
+  for (const feature of contextFeatures) {
+    const unit = landUnit(currentEra(), feature.properties.name);
+    if (unit && ids.has(unit.id)) geometries.push(feature.geometry);
+  }
+  if (!geometries.length) return null;
+  const geometry = geometries.length === 1
+    ? geometries[0]
+    : { type: "GeometryCollection", geometries };
+  return geoCentroid({ type: "Feature", properties: {}, geometry });
+}
+
+function clippedGeometry(adcode, geometry, cut, side) {
+  const key = `${adcode}:${cut}:${side}`;
+  if (clipCache.has(key)) return clipCache.get(key);
+  let result = geometry;
+  try {
+    const multi = geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+    const hit = polygonClipping.intersection(multi, [halfPlane(cut, side)]);
+    if (hit?.length) result = { type: "MultiPolygon", coordinates: orientForMap(hit) };
+  } catch {
+    result = geometry;
+  }
+  clipCache.set(key, result);
+  return result;
+}
+
+function orientForMap(polygons) {
+  for (const polygon of polygons) {
+    polygon.forEach((ring, index) => {
+      const exterior = index === 0;
+      const sign = ringSign(ring);
+      if ((exterior && sign > 0) || (!exterior && sign < 0)) ring.reverse();
+    });
+  }
+  return polygons;
+}
+
+function ringSign(ring) {
+  let area = 0;
+  for (let i = 0; i < ring.length - 1; i += 1) {
+    area += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+  }
+  return area;
+}
+
+function halfPlane(cut, side) {
+  const line = CUTS[cut];
+  const cap = side === "north" ? 60 : 10;
+  const west = [70, line[0][1]];
+  const east = [140, line[line.length - 1][1]];
+  const forward = side === "north" ? [west, ...line, east] : [east, ...[...line].reverse(), west];
+  const farWest = [70, cap];
+  const farEast = [140, cap];
+  return side === "north"
+    ? [...forward, farEast, farWest, forward[0]]
+    : [...forward, farWest, farEast, forward[0]];
 }
 
 function areaOf(feature) {

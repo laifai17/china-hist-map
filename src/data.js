@@ -37,6 +37,39 @@ export const PROVINCES = [
   { adcode: 820000, name: "澳門", full: "澳門特別行政區", level: "特別行政區", color: "#a36b4a" },
 ];
 
+export const CONTEXT_LANDS = ["Mongolia", "Vietnam", "North Korea", "South Korea", "Japan"];
+
+export const LAND_LABEL = {
+  Mongolia: "蒙古",
+  Vietnam: "越南",
+  "North Korea": "朝鮮",
+  "South Korea": "朝鮮",
+  Japan: "日本",
+};
+
+export const CUTS = {
+  huai: [[112.0, 32.1], [114.1, 32.45], [116.2, 32.9], [117.6, 33.1], [119.3, 33.6], [121.2, 34.2]],
+  baigou: [[113.2, 39.7], [114.6, 39.4], [116.0, 39.1], [117.6, 39.15], [119.6, 39.0]],
+  yanmen: [[110.6, 39.7], [112.0, 39.4], [113.2, 39.15], [114.8, 39.5]],
+  qinling: [[105.4, 33.9], [107.0, 34.15], [108.8, 33.7], [110.3, 33.45], [111.6, 33.2]],
+};
+
+export const REALM_COLORS = {
+  秦: "#b85c38",
+  漢: "#a3543c",
+  唐: "#b85c38",
+  宋: "#1f6f8a",
+  南宋: "#1f7e8c",
+  遼: "#3d5f86",
+  金: "#a56b2a",
+  西夏: "#8e9360",
+  元: "#3e6f8c",
+  明: "#8e2f2f",
+  清: "#8e2f2f",
+  民國: "#3e6f8c",
+  今日: "#9a3b32",
+};
+
 const C = {
   guan: "#b85c38",
   yu: "#d09a3a",
@@ -205,6 +238,10 @@ const HISTORICAL = [
         adcodes: [710000],
         note: "秦的郡縣沒有包括臺灣。",
       },
+      { id: "qin-xiongnu", name: "匈奴", short: "匈奴", kind: "frontier", color: "#8d7a4a", adcodes: [], lands: ["Mongolia"], note: "漠北是匈奴。圖上用今日蒙古國的範圍示意，不是當時邊界。" },
+      { id: "qin-ou", name: "甌駱", short: "甌駱", kind: "frontier", color: "#3d7a62", adcodes: [], lands: ["Vietnam"], note: "嶺南以南。象郡爭議大，所以不畫成秦郡。" },
+      { id: "qin-chaoxian", name: "古朝鮮", short: "朝鮮", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "半島未入秦郡。整片用今日國界示意。" },
+      { id: "qin-wo", name: "倭", short: "倭", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "海上列島，不屬秦。" },
     ],
     points: QIN_POINTS,
   },
@@ -229,7 +266,7 @@ const HISTORICAL = [
       { id: "han-liang", name: "涼州", short: "涼州", kind: "core", color: C.long, adcodes: [620000, 640000], note: "河西四郡已經設立。" },
       { id: "han-bing", name: "并州", short: "并州", kind: "core", color: C.jin, adcodes: [140000], note: "太原、上黨一帶。河東郡屬司隸。" },
       { id: "han-you", name: "幽州", short: "幽州", kind: "core", color: C.liao, adcodes: [110000, 120000, 210000], note: "燕地和遼東。今日北京一帶屬幽州，不屬冀州。" },
-      { id: "han-jiao", name: "交趾刺史部", short: "交趾", kind: "core", color: C.yue, adcodes: [440000, 450000, 810000, 820000], note: "嶺南。東漢才改稱交州。" },
+      { id: "han-jiao", name: "交趾刺史部", short: "交趾", kind: "core", color: C.yue, adcodes: [440000, 450000, 810000, 820000], lands: ["Vietnam"], note: "嶺南，加上交趾、九真、日南。越南用今日國界示意，南界過粗。" },
       { id: "han-xiyu", name: "西域都護府", short: "西域", kind: "frontier", color: C.yuqi, adcodes: [650000], note: "前60年設都護，駐綠洲城國，不管整個天山南北的每一寸地。" },
       { id: "han-hetao", name: "河套／匈奴", short: "河套", kind: "split", color: C.sai, adcodes: [150000], note: "河套有朔方、五原。漠北仍是匈奴。" },
       { id: "han-yilou", name: "挹婁", short: "挹婁", kind: "outer", adcodes: [220000, 230000], note: "玄菟郡只及遼東塞外一部，吉林、黑龍江主體未置郡。" },
@@ -237,6 +274,9 @@ const HISTORICAL = [
       { id: "han-qiang", name: "西羌", short: "西羌", kind: "outer", adcodes: [630000], note: "金城郡以外的青海，仍是羌人地方。" },
       { id: "han-zang", name: "未置州", short: "未置州", kind: "outer", adcodes: [540000], note: "高原部族，不在十三州之內。" },
       { id: "han-tai", name: "未置縣", short: "未置縣", kind: "outer", adcodes: [710000], note: "會稽海外，漢朝沒有設縣。" },
+      { id: "han-xiongnu", name: "匈奴", short: "匈奴", kind: "frontier", color: "#8d7a4a", adcodes: [], lands: ["Mongolia"], note: "漠北仍是匈奴。河套的朔方、五原在今日內蒙古，不在這一片。" },
+      { id: "han-chaoxian", name: "朝鮮諸部", short: "朝鮮", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "樂浪等郡只在半島西北。圖上沒有拆開，所以沒有整片塗成漢朝。" },
+      { id: "han-wo", name: "倭", short: "倭", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "不屬漢朝的郡。" },
     ],
   },
   {
@@ -263,14 +303,16 @@ const HISTORICAL = [
       { id: "tang-jiangnan-w", name: "江南西道", short: "江南西", kind: "core", color: C.xiang, adcodes: [360000, 430000], note: "江西和湖南。湖北屬山南，不在這裡。" },
       { id: "tang-qian", name: "黔中道", short: "黔中", kind: "core", color: C.qian, adcodes: [520000], note: "從江南道分出的西南山區。" },
       { id: "tang-jiannan", name: "劍南道", short: "劍南", kind: "core", color: "#6d4570", adcodes: [510000], note: "劍閣以南的四川盆地。雲南已是南詔，不算劍南。" },
-      { id: "tang-lingnan", name: "嶺南道", short: "嶺南", kind: "core", color: C.yue, adcodes: [440000, 450000, 460000, 810000, 820000], note: "五嶺以南，含瓊州。" },
+      { id: "tang-lingnan", name: "嶺南道", short: "嶺南", kind: "core", color: C.yue, adcodes: [440000, 450000, 460000, 810000, 820000], lands: ["Vietnam"], note: "五嶺以南，含瓊州。安南都護府在今日越南北部，圖上用成個越南示意。" },
       { id: "tang-nanzhao", name: "南詔", short: "南詔", kind: "core", color: C.dian, adcodes: [530000], note: "738年統一，都太和城，在今大理一帶。" },
       { id: "tang-tubo", name: "吐蕃", short: "吐蕃", kind: "core", color: C.zang, adcodes: [540000, 630000], note: "此時控制青藏高原大部，並進迫河湟。" },
-      { id: "tang-tujue", name: "後突厥", short: "後突厥", kind: "frontier", color: C.sai, adcodes: [150000], note: "741年後突厥尚未崩潰，回紇稱汗要到745年。" },
+      { id: "tang-tujue", name: "後突厥", short: "後突厥", kind: "frontier", color: C.sai, adcodes: [150000], lands: ["Mongolia"], note: "741年後突厥尚未崩潰，回紇稱汗要到745年。漠北用今日蒙古國示意。" },
       { id: "tang-anxi", name: "安西、北庭", short: "安西", kind: "frontier", color: C.yuqi, adcodes: [650000], note: "都護府控制軍鎮和綠洲，吐蕃也在爭奪塔里木。" },
       { id: "tang-ying", name: "營州／渤海", short: "營州", kind: "split", color: C.liao, adcodes: [210000], note: "遼西仍有營州，遼東大部與渤海相接。安東都護府已經很弱。" },
       { id: "tang-bohai", name: "渤海", short: "渤海", kind: "core", color: C.hei, adcodes: [220000, 230000], note: "靺鞨所建，都上京龍泉府，在今黑龍江寧安一帶。" },
       { id: "tang-tai", name: "流求", short: "流求", kind: "outer", adcodes: [710000], note: "唐代文獻中的流求，沒有設道或州。" },
+      { id: "tang-silla", name: "新羅", short: "新羅", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "半島主體是新羅。渤海在東北，不在這一片。" },
+      { id: "tang-japan", name: "日本", short: "日本", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "不屬唐朝的道。" },
     ],
   },
   {
@@ -281,14 +323,15 @@ const HISTORICAL = [
     system: "路",
     tick: "宋遼",
     headline: "燕雲在遼，河西在西夏",
-    body: "北宋把唐的道改成路，例如兩浙路、福建路、廣南東路。但今日的北京不在宋境：燕雲是遼的南京析津府。河西是西夏，雲南是大理。河北一省當時被宋、遼分佔，所以畫成斜線。",
+    body: "北宋把唐的道改成路，例如兩浙路、福建路、廣南東路。但今日的北京不在宋境：燕雲是遼的南京析津府。河西是西夏，雲南是大理。河北沿白溝河切開，山西沿雁門一帶切開，不再跟今日省界走。",
     units: [
       { id: "sl-nanjing", name: "遼南京道", short: "遼南京", kind: "core", color: C.liao, adcodes: [110000, 120000], note: "析津府，就是後來的北京。對宋人來說這是燕雲故地。" },
       { id: "sl-dongjing", name: "遼東京道", short: "遼東京", kind: "core", color: "#2f4f73", adcodes: [210000], note: "遼陽一帶。" },
       { id: "sl-shangjing", name: "遼上京道", short: "遼上京", kind: "core", color: C.hei, adcodes: [220000, 230000, 150000], note: "上京臨潢府在今內蒙古巴林左旗。圖上把東北和內蒙古併在一起，只表示同屬遼的北部。" },
       { id: "sl-jingdong", name: "京東路", short: "京東", kind: "core", color: C.qi, adcodes: [370000], note: "北宋京東東路、京東西路，約今日山東。" },
       { id: "sl-jingxi", name: "京畿、京西路", short: "京西", kind: "core", color: C.yu, adcodes: [410000], note: "開封是京畿。京西北、京西南路延伸到襄鄧。" },
-      { id: "sl-hedong", name: "宋河東／遼西京", short: "河東", kind: "split", color: C.jin, adcodes: [140000], note: "太原屬宋河東路，大同（雲州）屬遼西京道。" },
+      { id: "sl-shanxi-n", name: "遼西京道", short: "遼西京", kind: "core", color: "#35557a", adcodes: [], clips: [{ adcode: 140000, cut: "yanmen", side: "north" }], note: "大同、雲州在雁門以北，屬遼。" },
+      { id: "sl-hedong-s", name: "宋河東路", short: "宋河東", kind: "core", color: C.jin, adcodes: [], clips: [{ adcode: 140000, cut: "yanmen", side: "south" }], note: "太原在雁門以南，屬宋。" },
       { id: "sl-shanxi", name: "永興軍、秦鳳路", short: "陝西", kind: "core", color: C.guan, adcodes: [610000], note: "北宋習慣把這一片稱作陝西。北緣與西夏相接。" },
       { id: "sl-huainan", name: "淮南東、西路", short: "淮南", kind: "core", color: C.huai, adcodes: [320000, 340000], note: "皖南實際上多屬江南東路，圖上沒有拆開安徽。" },
       { id: "sl-liangzhe", name: "兩浙路", short: "兩浙", kind: "core", color: C.wu, adcodes: [330000, 310000], note: "含今天的上海。" },
@@ -300,7 +343,8 @@ const HISTORICAL = [
       { id: "sl-guangnan-e", name: "廣南東路", short: "廣南東", kind: "core", color: C.yue, adcodes: [440000, 810000, 820000], note: "廣州。海南不在這一路。" },
       { id: "sl-guangnan-w", name: "廣南西路", short: "廣南西", kind: "core", color: C.gui, adcodes: [450000, 460000], note: "桂林和瓊管。海南屬廣南西路。" },
       { id: "sl-qian", name: "夔州路南部", short: "黔", kind: "frontier", color: C.qian, adcodes: [520000], note: "宋對貴州多是羈縻州，不是內地正州。" },
-      { id: "sl-hebei", name: "宋河北路／遼南京", short: "宋／遼", kind: "split", color: C.ji, adcodes: [130000], note: "白溝河以南大致屬宋，以北屬遼。今日河北省無法用一條省界切開。" },
+      { id: "sl-hebei-n", name: "遼南京道北部", short: "遼界北", kind: "core", color: C.liao, adcodes: [], clips: [{ adcode: 130000, cut: "baigou", side: "north" }], note: "白溝河以北屬遼，包括後世的張家口、承德一帶。" },
+      { id: "sl-hebei-s", name: "宋河北東、西路", short: "宋河北", kind: "core", color: C.ji, adcodes: [], clips: [{ adcode: 130000, cut: "baigou", side: "south" }], note: "白溝河以南屬宋，包括真定、大名一帶。" },
       { id: "sl-gansu", name: "秦鳳路／西夏", short: "宋／夏", kind: "split", color: C.long, adcodes: [620000], note: "隴南、秦州一帶屬宋，河西走廊屬西夏。" },
       { id: "sl-xia", name: "西夏", short: "西夏", kind: "core", color: C.xia, adcodes: [640000], note: "都興慶府，在今日銀川。" },
       { id: "sl-dali", name: "大理", short: "大理", kind: "core", color: C.dian, adcodes: [530000], note: "937年以來的大理國，宋朝沒有把雲南設路。" },
@@ -308,6 +352,10 @@ const HISTORICAL = [
       { id: "sl-gusiluo", name: "唃廝囉", short: "唃廝囉", kind: "frontier", color: C.qinghai, adcodes: [630000], note: "青唐城，在今日西寧一帶，夾在宋和西夏之間。" },
       { id: "sl-xiyu", name: "高昌、喀喇汗", short: "西域", kind: "frontier", color: C.yuqi, adcodes: [650000], note: "東部多屬西州回鶻，西部與喀喇汗朝相關。不是宋的路。" },
       { id: "sl-tai", name: "流求", short: "流求", kind: "outer", adcodes: [710000], note: "宋朝沒有在島上設路。" },
+      { id: "sl-mongol", name: "阻卜諸部", short: "阻卜", kind: "frontier", color: "#8d7a4a", adcodes: [], lands: ["Mongolia"], note: "遼的北邊有阻卜等部，不是宋的路，也不是一整個行省。" },
+      { id: "sl-viet", name: "大越", short: "大越", kind: "frontier", color: "#2f6b4f", adcodes: [], lands: ["Vietnam"], note: "獨立於宋。圖上用今日越南示意。" },
+      { id: "sl-goryeo", name: "高麗", short: "高麗", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "高麗王朝，不是遼或宋的路。" },
+      { id: "sl-japan", name: "日本", short: "日本", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "不屬宋、遼。" },
     ],
   },
   {
@@ -324,7 +372,8 @@ const HISTORICAL = [
       { id: "sj-shandong", name: "金山東路", short: "金山東", kind: "core", color: "#c48a3a", adcodes: [370000], note: "山東東路、山東西路。" },
       { id: "sj-hedong", name: "金河東路", short: "金河東", kind: "core", color: C.jin, adcodes: [140000], note: "河東北路、河東南路。" },
       { id: "sj-nanjing", name: "金南京路", short: "金南京", kind: "core", color: C.yu, adcodes: [410000], note: "開封在金朝叫南京。" },
-      { id: "sj-shanxi", name: "金京兆路", short: "金陝西", kind: "core", color: C.guan, adcodes: [610000], note: "關中屬金。漢中一帶仍屬南宋利州路。" },
+      { id: "sj-shanxi", name: "金京兆路", short: "金陝西", kind: "core", color: C.guan, adcodes: [], clips: [{ adcode: 610000, cut: "qinling", side: "north" }], note: "秦嶺、大散關以北的關中屬金。" },
+      { id: "sj-hanzhong", name: "南宋利州路", short: "利州", kind: "core", color: "#6d4570", adcodes: [], clips: [{ adcode: 610000, cut: "qinling", side: "south" }], note: "漢中在秦嶺以南，仍屬南宋。" },
       { id: "sj-shangjing", name: "金上京、東京路", short: "金東北", kind: "core", color: C.hei, adcodes: [210000, 220000, 230000], note: "金的龍興之地。上京會寧府在今哈爾濱阿城。" },
       { id: "sj-meng", name: "金西北路邊", short: "金邊", kind: "frontier", color: C.sai, adcodes: [150000], note: "金設招討司。更北的蒙古諸部即將崛起，1206年鐵木真才稱成吉思汗。" },
       { id: "sj-liangzhe", name: "兩浙路", short: "兩浙", kind: "core", color: C.wu, adcodes: [330000, 310000], note: "南宋行在臨安，在今日杭州。" },
@@ -336,7 +385,8 @@ const HISTORICAL = [
       { id: "sj-guangnan-e", name: "廣南東路", short: "廣南東", kind: "core", color: C.yue, adcodes: [440000, 810000, 820000], note: "廣州。" },
       { id: "sj-guangnan-w", name: "廣南西路", short: "廣南西", kind: "core", color: C.gui, adcodes: [450000, 460000], note: "桂林、雷瓊。" },
       { id: "sj-qian", name: "羈縻州", short: "羈縻", kind: "frontier", color: C.qian, adcodes: [520000], note: "貴州仍多羈縻，不是南宋的內地州。" },
-      { id: "sj-huai", name: "金宋分界", short: "淮河", kind: "split", color: C.huai, adcodes: [320000, 340000], note: "和議以淮河為界。今日江蘇、安徽都被淮河切成兩半。" },
+      { id: "sj-huai-n", name: "金淮北", short: "金淮北", kind: "core", color: C.jinDyn, adcodes: [], clips: [{ adcode: 320000, cut: "huai", side: "north" }, { adcode: 340000, cut: "huai", side: "north" }], note: "淮河以北歸金。今日江蘇、安徽在這裡被切開。" },
+      { id: "sj-huai-s", name: "南宋淮南東、西路", short: "淮南", kind: "core", color: C.huai, adcodes: [], clips: [{ adcode: 320000, cut: "huai", side: "south" }, { adcode: 340000, cut: "huai", side: "south" }], note: "淮河以南歸南宋。" },
       { id: "sj-xia-ning", name: "西夏", short: "西夏", kind: "core", color: C.xia, adcodes: [640000], note: "夏仁宗在位，國勢仍穩。" },
       { id: "sj-xia-gan", name: "西夏河西", short: "河西", kind: "core", color: "#c4924a", adcodes: [620000], note: "涼州、甘州、肅州屬西夏。隴南一部仍可能屬宋，省界畫不開。" },
       { id: "sj-dali", name: "大理", short: "大理", kind: "core", color: C.dian, adcodes: [530000], note: "大理仍在，1253年才為蒙古所滅。" },
@@ -344,6 +394,10 @@ const HISTORICAL = [
       { id: "sj-qing", name: "吐蕃、西夏邊地", short: "河湟", kind: "frontier", color: C.qinghai, adcodes: [630000], note: "河湟在金、夏和吐蕃部族之間。" },
       { id: "sj-xiliao", name: "西遼", short: "西遼", kind: "frontier", color: C.yuqi, adcodes: [650000], note: "耶律大石1132年稱帝。天山以南並不完全聽命，圖上只標主要政權。" },
       { id: "sj-tai", name: "流求", short: "流求", kind: "outer", adcodes: [710000], note: "南宋沒有設州縣。" },
+      { id: "sj-mongol", name: "蒙古諸部", short: "蒙古", kind: "frontier", color: "#8d7a4a", adcodes: [], lands: ["Mongolia"], note: "金的招討司在今日內蒙古。更北的蒙古諸部尚未建國。" },
+      { id: "sj-viet", name: "大越", short: "大越", kind: "frontier", color: "#2f6b4f", adcodes: [], lands: ["Vietnam"], note: "獨立於金和南宋。" },
+      { id: "sj-goryeo", name: "高麗", short: "高麗", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "不是金的路。" },
+      { id: "sj-japan", name: "日本", short: "日本", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "不屬金或南宋。" },
     ],
   },
   {
@@ -367,9 +421,12 @@ const HISTORICAL = [
       { id: "yuan-shaanxi", name: "陝西行省", short: "陝西", kind: "core", color: C.guan, adcodes: [610000], note: "治奉元，今西安。甘肅另有行省。" },
       { id: "yuan-gansu", name: "甘肅行省", short: "甘肅", kind: "core", color: C.long, adcodes: [620000, 640000], note: "治甘州，今張掖。河西是主體。" },
       { id: "yuan-xuanzheng", name: "宣政院轄地", short: "宣政院", kind: "frontier", color: C.zang, adcodes: [540000, 630000], note: "烏思藏、朵甘等。宣政院在大都，不是內地那種行省。" },
-      { id: "yuan-lingbei", name: "嶺北行省", short: "嶺北", kind: "frontier", color: C.sai, adcodes: [150000], note: "治和林，主體在漠北。今日內蒙古南部更靠近腹裏，圖上無法拆開。" },
+      { id: "yuan-lingbei", name: "嶺北行省", short: "嶺北", kind: "frontier", color: C.sai, adcodes: [150000], lands: ["Mongolia"], note: "治和林，主體在漠北。今日蒙古國在這一片。再西的金帳汗國不在這張圖。" },
       { id: "yuan-chagatai", name: "察合台汗國", short: "察合台", kind: "frontier", color: C.yuqi, adcodes: [650000], note: "與元朝時戰時和。哈密一帶往來較多。" },
       { id: "yuan-tai", name: "琉求", short: "琉求", kind: "outer", adcodes: [710000], note: "澎湖巡檢司屬江浙行省。臺灣本島沒有設行省。" },
+      { id: "yuan-viet", name: "大越", short: "大越", kind: "frontier", color: "#2f6b4f", adcodes: [], lands: ["Vietnam"], note: "陳朝仍在。元朝幾次用兵，沒有設行省。" },
+      { id: "yuan-goryeo", name: "高麗", short: "高麗", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "征東行省名義上統高麗，國王仍在，不算腹地行省。" },
+      { id: "yuan-japan", name: "日本", short: "日本", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "兩次東征都沒有打下。不屬元朝。" },
     ],
   },
   {
@@ -399,11 +456,14 @@ const HISTORICAL = [
       { id: "ming-qian", name: "貴州布政使司", short: "貴州", kind: "core", color: C.qian, adcodes: [520000], note: "1413年設省，治貴陽。" },
       { id: "ming-liaodong", name: "遼東都司", short: "遼東", kind: "frontier", color: C.liao, adcodes: [210000], note: "軍事系統的都指揮使司，治遼陽，不是布政使司。" },
       { id: "ming-nvzhen", name: "女真諸部", short: "女真", kind: "frontier", color: C.hei, adcodes: [220000, 230000], note: "奴兒干都司設於1409年，正統以後名存實亡。建州女真正在興起。" },
-      { id: "ming-meng", name: "蒙古諸部", short: "蒙古", kind: "frontier", color: C.sai, adcodes: [150000], note: "韃靼、瓦剌。明朝在長城一線設九邊，沒有把草原設省。" },
+      { id: "ming-meng", name: "蒙古諸部", short: "蒙古", kind: "frontier", color: C.sai, adcodes: [150000], lands: ["Mongolia"], note: "韃靼、瓦剌。明朝在長城一線設九邊，沒有把草原設省。" },
       { id: "ming-wusi", name: "烏思藏都司", short: "烏思藏", kind: "frontier", color: C.zang, adcodes: [540000], note: "羈縻都司，不是布政使司。" },
       { id: "ming-duogan", name: "朵甘都司", short: "朵甘", kind: "frontier", color: C.qinghai, adcodes: [630000], note: "名義上的羈縻都司，約在今日青海、川西。" },
       { id: "ming-xiyu", name: "西域諸國", short: "西域", kind: "outer", adcodes: [650000], note: "吐魯番、葉爾羌等。明朝沒有在這裡設布政使司。" },
       { id: "ming-tai", name: "未設府", short: "未設府", kind: "outer", adcodes: [710000], note: "澎湖巡檢屬福建。荷蘭人1624年才據臺南，已在這個年份之後。" },
+      { id: "ming-viet", name: "大越", short: "大越", kind: "frontier", color: "#2f6b4f", adcodes: [], lands: ["Vietnam"], note: "明初一度設交趾布政使司，1427年已撤。1582年不是明朝的省。" },
+      { id: "ming-joseon", name: "朝鮮", short: "朝鮮", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "朝鮮王朝，朝貢，不是兩京十三省。" },
+      { id: "ming-japan", name: "日本", short: "日本", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "不屬明朝。" },
     ],
   },
   {
@@ -437,10 +497,13 @@ const HISTORICAL = [
       { id: "qing-fengtian", name: "盛京", short: "盛京", kind: "frontier", color: C.liao, adcodes: [210000], note: "盛京將軍，一般也叫奉天。1907年才改行省。" },
       { id: "qing-jilin", name: "吉林", short: "吉林", kind: "frontier", color: C.jilin, adcodes: [220000], note: "吉林將軍。1907年建省。" },
       { id: "qing-hei", name: "黑龍江", short: "黑龍江", kind: "frontier", color: C.hei, adcodes: [230000], note: "黑龍江將軍。1907年建省。" },
-      { id: "qing-meng", name: "蒙古盟旗", short: "盟旗", kind: "frontier", color: C.sai, adcodes: [150000], note: "內扎薩克各旗，不設省。外蒙古不在今日內蒙古範圍內。" },
+      { id: "qing-meng", name: "蒙古盟旗", short: "盟旗", kind: "frontier", color: C.sai, adcodes: [150000], lands: ["Mongolia"], note: "內扎薩克在今日內蒙古。外蒙古喀爾喀也屬清，用今日蒙古國示意，不設省。" },
       { id: "qing-qinghai", name: "青海", short: "青海", kind: "frontier", color: C.qinghai, adcodes: [630000], note: "西寧辦事大臣。1928年才建青海省。" },
       { id: "qing-zang", name: "西藏", short: "西藏", kind: "frontier", color: C.zang, adcodes: [540000], note: "駐藏大臣與噶廈並存。不是內地的省。" },
       { id: "qing-yili", name: "伊犁將軍", short: "伊犁", kind: "frontier", color: C.yuqi, adcodes: [650000], note: "1884年建新疆省。1820年還沒有這個省名。" },
+      { id: "qing-viet", name: "越南", short: "越南", kind: "frontier", color: "#2f6b4f", adcodes: [], lands: ["Vietnam"], note: "阮朝朝貢，不是清朝的省。" },
+      { id: "qing-joseon", name: "朝鮮", short: "朝鮮", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "朝鮮王朝朝貢，不是內地的省。" },
+      { id: "qing-japan", name: "日本", short: "日本", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "不屬清朝。" },
     ],
   },
   {
@@ -485,6 +548,10 @@ const HISTORICAL = [
       { id: "roc-tai", name: "臺灣省", short: "臺灣", kind: "core", color: C.tai, adcodes: [710000], note: "1945年光復後設立。" },
       { id: "roc-hk", name: "香港", short: "香港", kind: "frontier", color: "#8a3e4a", adcodes: [810000], note: "英國管治。1997年設立特別行政區。" },
       { id: "roc-mo", name: "澳門", short: "澳門", kind: "frontier", color: "#a36b4a", adcodes: [820000], note: "葡萄牙管治。1999年設立特別行政區。" },
+      { id: "roc-outer-meng", name: "外蒙古", short: "外蒙古", kind: "frontier", color: "#8d7a4a", adcodes: [], lands: ["Mongolia"], note: "1945年公民投票後，1946年中華民國承認獨立。" },
+      { id: "roc-viet", name: "越南", short: "越南", kind: "frontier", color: "#2f6b4f", adcodes: [], lands: ["Vietnam"], note: "不是民國的省。" },
+      { id: "roc-korea", name: "朝鮮", short: "朝鮮", kind: "frontier", color: "#3d5f86", adcodes: [], lands: ["North Korea", "South Korea"], note: "1945年光復。不是民國的省。" },
+      { id: "roc-japan", name: "日本", short: "日本", kind: "frontier", color: "#a67c52", adcodes: [], lands: ["Japan"], note: "不屬民國。" },
     ],
   },
 ];
@@ -505,6 +572,7 @@ function presentEra() {
       short: province.name,
       kind: "core",
       color: province.color,
+      realm: "今日",
       adcodes: [province.adcode],
       note: province.level,
     })),
@@ -520,17 +588,37 @@ export function validate(eras = ERAS, provinces = PROVINCES) {
   for (const era of eras) {
     if (eraIds.has(era.id)) errors.push(`重複時代 ${era.id}`);
     eraIds.add(era.id);
-    const seen = new Map();
+    const whole = new Map();
+    const clips = new Map();
     for (const unit of era.units) {
-      if (!unit.adcodes?.length) errors.push(`${era.id} ${unit.id} 沒有範圍`);
-      for (const code of unit.adcodes) {
+      if (!unit.adcodes?.length && !unit.clips?.length && !unit.lands?.length) errors.push(`${era.id} ${unit.id} 沒有範圍`);
+      for (const land of unit.lands || []) {
+        if (!CONTEXT_LANDS.includes(land)) errors.push(`${era.id} 未知鄰區 ${land}`);
+        const key = `${era.id}:${land}`;
+        if (clips.has(key)) errors.push(`${era.id} 重複鄰區 ${land}`);
+        clips.set(key, unit.name);
+      }
+      for (const code of unit.adcodes || []) {
         if (!codes.has(code)) errors.push(`${era.id} 未知代碼 ${code}`);
-        if (seen.has(code)) errors.push(`${era.id} 重複 ${code}（${seen.get(code)} / ${unit.name}）`);
-        seen.set(code, unit.name);
+        if (whole.has(code) || clips.has(code)) errors.push(`${era.id} 重複 ${code}`);
+        whole.set(code, unit.name);
+      }
+      for (const clip of unit.clips || []) {
+        if (!codes.has(clip.adcode)) errors.push(`${era.id} 未知代碼 ${clip.adcode}`);
+        if (!CUTS[clip.cut]) errors.push(`${era.id} 未知分界 ${clip.cut}`);
+        if (whole.has(clip.adcode)) errors.push(`${era.id} ${clip.adcode} 既整省又切開`);
+        const key = `${clip.adcode}:${clip.side}`;
+        if (clips.has(key)) errors.push(`${era.id} 重複切開 ${key}`);
+        clips.set(key, clip.cut);
       }
     }
     for (const code of codes) {
-      if (!seen.has(code)) errors.push(`${era.id} 缺少 ${code}`);
+      if (whole.has(code)) continue;
+      const north = clips.get(`${code}:north`);
+      const south = clips.get(`${code}:south`);
+      if (!north && !south) errors.push(`${era.id} 缺少 ${code}`);
+      else if (!north || !south) errors.push(`${era.id} ${code} 只切了一半`);
+      else if (north !== south) errors.push(`${era.id} ${code} 兩邊用了不同分界`);
     }
   }
   return errors;
@@ -544,16 +632,27 @@ export function unitFor(era, adcode) {
   return era.units.find((unit) => unit.adcodes.includes(Number(adcode)));
 }
 
+export function unitCodes(unit) {
+  const codes = [...(unit.adcodes || [])];
+  for (const clip of unit.clips || []) {
+    if (!codes.includes(clip.adcode)) codes.push(clip.adcode);
+  }
+  return codes;
+}
+
+export function partsFor(era, adcode) {
+  const code = Number(adcode);
+  const whole = era.units.find((unit) => unit.adcodes.includes(code));
+  if (whole) return [{ unit: whole, where: "" }];
+  return era.units.flatMap((unit) => (unit.clips || [])
+    .filter((clip) => clip.adcode === code)
+    .map((clip) => ({ unit, where: clip.side === "north" ? "北" : "南" })));
+}
+
 export function summarizeChanges(previous, current) {
   if (!previous) return [];
-  const previousByCode = new Map();
-  const currentByCode = new Map();
-  for (const unit of previous.units) {
-    for (const code of unit.adcodes) previousByCode.set(code, unit);
-  }
-  for (const unit of current.units) {
-    for (const code of unit.adcodes) currentByCode.set(code, unit);
-  }
+  const previousByCode = indexOwners(previous);
+  const currentByCode = indexOwners(current);
 
   const messages = [];
   for (const oldUnit of previous.units) {
@@ -601,6 +700,76 @@ export function summarizeChanges(previous, current) {
   }
   return lines;
 }
+
+function indexOwners(era) {
+  const map = new Map();
+  for (const unit of era.units) {
+    for (const code of unit.adcodes || []) map.set(code, unit);
+  }
+  const grouped = new Map();
+  for (const unit of era.units) {
+    for (const clip of unit.clips || []) {
+      if (!grouped.has(clip.adcode)) grouped.set(clip.adcode, []);
+      grouped.get(clip.adcode).push(unit.name);
+    }
+  }
+  for (const [code, names] of grouped) {
+    map.set(code, { name: names.join("／"), adcodes: [code] });
+  }
+  return map;
+}
+
+const REALM_MEMBERS = {
+  qin: { 秦: ["qin-core", "qin-long", "qin-qian"] },
+  han: { 漢: ["han-sili", "han-yu", "han-ji", "han-qing", "han-xu", "han-jing", "han-yang", "han-yi", "han-liang", "han-bing", "han-you", "han-jiao"] },
+  tang: { 唐: ["tang-jingji", "tang-duji", "tang-guannei", "tang-henan", "tang-hedong", "tang-hebei", "tang-shannan-e", "tang-shannan-w", "tang-longyou", "tang-huainan", "tang-jiangnan-e", "tang-jiangnan-w", "tang-qian", "tang-jiannan", "tang-lingnan"] },
+  "song-liao": {
+    遼: ["sl-nanjing", "sl-dongjing", "sl-shangjing", "sl-shanxi-n", "sl-hebei-n"],
+    宋: ["sl-jingdong", "sl-jingxi", "sl-hedong-s", "sl-shanxi", "sl-huainan", "sl-liangzhe", "sl-fujian", "sl-jiangnan", "sl-jinghu-n", "sl-jinghu-s", "sl-chuan", "sl-guangnan-e", "sl-guangnan-w", "sl-qian", "sl-hebei-s"],
+    西夏: ["sl-xia"],
+  },
+  "song-jin": {
+    金: ["sj-zhongdu", "sj-shandong", "sj-hedong", "sj-nanjing", "sj-shanxi", "sj-shangjing", "sj-meng", "sj-huai-n"],
+    南宋: ["sj-liangzhe", "sj-fujian", "sj-jiangnan", "sj-jinghu-n", "sj-jinghu-s", "sj-chuan", "sj-guangnan-e", "sj-guangnan-w", "sj-qian", "sj-huai-s", "sj-hanzhong"],
+    西夏: ["sj-xia-ning", "sj-xia-gan"],
+  },
+  ming: { 明: ["ming-bei", "ming-nan", "ming-lu", "ming-jin", "ming-yu", "ming-shan", "ming-shu", "ming-gan", "ming-huguang", "ming-zhe", "ming-min", "ming-yue", "ming-gui", "ming-dian", "ming-qian", "ming-liaodong"] },
+};
+
+function assignRealms(eras) {
+  for (const era of eras) {
+    if (era.id === "qing") {
+      for (const unit of era.units) {
+        if (!["qing-viet", "qing-joseon", "qing-japan"].includes(unit.id)) unit.realm = "清";
+      }
+      continue;
+    }
+    if (era.id === "yuan") {
+      for (const unit of era.units) {
+        if (!["yuan-chagatai", "yuan-tai", "yuan-viet", "yuan-goryeo", "yuan-japan"].includes(unit.id)) unit.realm = "元";
+      }
+      continue;
+    }
+    if (era.id === "roc") {
+      for (const unit of era.units) {
+        if (!["roc-hk", "roc-mo", "roc-zang", "roc-outer-meng", "roc-viet", "roc-korea", "roc-japan"].includes(unit.id)) unit.realm = "民國";
+      }
+      continue;
+    }
+    const members = REALM_MEMBERS[era.id];
+    if (!members) continue;
+    const realmById = new Map();
+    for (const [realm, ids] of Object.entries(members)) {
+      for (const id of ids) realmById.set(id, realm);
+    }
+    for (const unit of era.units) {
+      const realm = realmById.get(unit.id);
+      if (realm) unit.realm = realm;
+    }
+  }
+}
+
+assignRealms(ERAS);
 
 function joinNames(names) {
   const shown = names.slice(0, 4).join("、");
