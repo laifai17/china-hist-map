@@ -45,6 +45,14 @@ let path = geoPath(projection);
 let features = [];
 const featureByCode = new Map();
 const clipCache = new Map();
+const CONTEXT_PLACES = [
+  { name: "蒙古", lon: 103, lat: 47 },
+  { name: "朝鮮半島", lon: 128.0, lat: 38.6 },
+  { name: "日本", lon: 138, lat: 36.2 },
+  { name: "越南", lon: 105.8, lat: 17.6 },
+  { name: "哈薩克", lon: 76, lat: 44.2 },
+];
+let contextFeatures = [];
 let pieces = [];
 let width = 800;
 let height = 600;
@@ -63,16 +71,24 @@ init().catch((error) => {
 });
 
 async function init() {
-  const response = await fetch(`${import.meta.env.BASE_URL}china.json`);
+  const [response, asiaResponse] = await Promise.all([
+    fetch(`${import.meta.env.BASE_URL}china.json`),
+    fetch(`${import.meta.env.BASE_URL}asia.json`),
+  ]);
   if (!response.ok) throw new Error("地圖資料載入失敗");
   const geo = await response.json();
   features = geo.features.map(sanitize).filter(Boolean);
+  contextFeatures = asiaResponse.ok ? (await asiaResponse.json()).features : [];
   featureByCode.clear();
   for (const feature of features) featureByCode.set(feature.properties.adcode, feature);
   const viewport = el("g");
   viewport.id = "viewport";
   const sea = el("rect");
   sea.id = "sea";
+  const context = el("g");
+  context.id = "context";
+  const contextLabels = el("g");
+  contextLabels.id = "context-labels";
   const historical = el("g");
   historical.id = "historical";
   const modern = el("g");
@@ -85,7 +101,13 @@ async function init() {
   const defs = el("defs");
   defs.id = "defs";
   svg.append(defs, viewport);
-  viewport.append(sea, historical, modern, points, labels);
+  viewport.append(sea, context, contextLabels, historical, modern, points, labels);
+  for (const feature of contextFeatures) {
+    const shape = el("path");
+    shape.classList.add("context-land");
+    shape.dataset.name = feature.properties.name;
+    context.append(shape);
+  }
 
   for (const feature of features) {
     const line = el("path");
@@ -170,9 +192,14 @@ function layout() {
   projection = geoMercator();
   projection.fitExtent([[28, 28], [width - 28, height - 24]], {
     type: "FeatureCollection",
-    features,
+    features: contextFeatures.length ? contextFeatures : features,
   });
   path = geoPath(projection);
+  const lands = svg.querySelectorAll("#context .context-land");
+  contextFeatures.forEach((feature, index) => {
+    lands[index]?.setAttribute("d", path(feature));
+  });
+  drawContextLabels();
   for (const feature of features) {
     const line = svg.querySelector(`#modern-lines [data-adcode="${feature.properties.adcode}"]`);
     if (line) line.setAttribute("d", path(feature));
@@ -407,6 +434,22 @@ function renderTimeline() {
   `;
 }
 
+function drawContextLabels() {
+  const layer = svg.querySelector("#context-labels");
+  if (!layer) return;
+  layer.replaceChildren();
+  for (const place of CONTEXT_PLACES) {
+    const projected = projection([place.lon, place.lat]);
+    if (!projected) continue;
+    const label = el("text");
+    label.classList.add("context-label");
+    label.setAttribute("x", projected[0]);
+    label.setAttribute("y", projected[1]);
+    label.textContent = place.name;
+    layer.append(label);
+  }
+}
+
 function drawLabels() {
   const layer = svg.querySelector("#labels");
   layer.replaceChildren();
@@ -513,7 +556,7 @@ function drawPoints() {
 
 function scaleLabels() {
   const k = view.k;
-  for (const label of svg.querySelectorAll(".map-label")) {
+  for (const label of svg.querySelectorAll(".map-label, .context-label")) {
     const x = label.getAttribute("x");
     const y = label.getAttribute("y");
     label.setAttribute("transform", `translate(${x} ${y}) scale(${1 / k}) translate(${-x} ${-y})`);
@@ -770,7 +813,7 @@ function eraWithQuery(query, exceptId) {
 }
 
 function disclaimer() {
-  return `<p class="disclaimer">預設畫的是當時政區。淮河、白溝、雁門、秦嶺會把今日的省切開，仍然是示意，不是實測疆界。按「今省界」才疊上現代省界。按「成個國」把同一政權收成一整塊。郡治位置是約數。海南遠海島嶼沒有畫入，避免地圖被拉扁。</p>`;
+  return `<p class="disclaimer">預設畫的是當時政區。淮河、白溝、雁門、秦嶺會把今日的省切開，仍然是示意，不是實測疆界。周圍淺色土地係今日海岸同鄰區，方便睇範圍，唔係當時疆界。按「今省界」才疊上現代省界。按「成個國」把同一政權收成一整塊。郡治位置是約數。海南遠海島嶼沒有畫入，避免地圖被拉扁。</p>`;
 }
 
 function swatchStyle(era, unit) {

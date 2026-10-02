@@ -134,6 +134,26 @@ h1 {
 
 #map.is-dragging { cursor: grabbing; }
 
+.context-land {
+  fill: #e6d3b4;
+  stroke: rgba(36, 25, 17, 0.28);
+  stroke-width: 0.7px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.context-label {
+  font-family: var(--serif);
+  font-size: 13px;
+  fill: #8a7968;
+  stroke: rgba(244, 236, 222, 0.9);
+  stroke-width: 3;
+  paint-order: stroke;
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
 .province {
   stroke-linejoin: round;
   stroke-linecap: round;
