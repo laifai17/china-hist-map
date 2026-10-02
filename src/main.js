@@ -3,6 +3,7 @@ import polygonClipping from "polygon-clipping";
 import {
   CUTS,
   ERAS,
+  LAND_LABEL,
   REALM_COLORS,
   partsFor,
   provinceByCode,
@@ -46,11 +47,11 @@ let features = [];
 const featureByCode = new Map();
 const clipCache = new Map();
 const CONTEXT_PLACES = [
-  { name: "蒙古", lon: 103, lat: 47 },
-  { name: "朝鮮半島", lon: 128.0, lat: 38.6 },
-  { name: "日本", lon: 138, lat: 36.2 },
-  { name: "越南", lon: 105.8, lat: 17.6 },
-  { name: "哈薩克", lon: 76, lat: 44.2 },
+  { name: "蒙古", lon: 103, lat: 47, land: "Mongolia" },
+  { name: "朝鮮半島", lon: 128.0, lat: 38.6, land: "North Korea" },
+  { name: "日本", lon: 138, lat: 36.2, land: "Japan" },
+  { name: "越南", lon: 105.8, lat: 17.6, land: "Vietnam" },
+  { name: "哈薩克", lon: 76, lat: 44.2, land: "" },
 ];
 let contextFeatures = [];
 let pieces = [];
@@ -220,6 +221,7 @@ function render() {
   paintFills();
   drawPoints();
   drawLabels();
+  drawContextLabels();
   paintInteraction();
   renderCartouche();
   renderPanel();
@@ -277,12 +279,37 @@ function paintFills() {
     shape.style.fill = fill;
     shape.style.stroke = unit?.kind === "split" ? unit.color : fill;
   }
+  paintContext();
+}
+
+function paintContext() {
+  const era = currentEra();
+  for (const shape of svg.querySelectorAll("#context .context-land")) {
+    const unit = landUnit(era, shape.dataset.name);
+    shape.classList.toggle("is-claimed", Boolean(unit));
+    if (!unit) {
+      delete shape.dataset.unit;
+      shape.style.fill = "";
+      shape.style.stroke = "";
+      continue;
+    }
+    const fill = state.showRealm && unit.realm && REALM_COLORS[unit.realm]
+      ? REALM_COLORS[unit.realm]
+      : unit.color;
+    shape.dataset.unit = unit.id;
+    shape.style.fill = fill;
+    shape.style.stroke = fill;
+  }
+}
+
+function landUnit(era, name) {
+  return era.units.find((unit) => unit.lands?.includes(name));
 }
 
 function paintInteraction() {
   const active = highlightedUnitIds();
   const dim = active.size > 0;
-  for (const shape of svg.querySelectorAll("#historical .province")) {
+  for (const shape of svg.querySelectorAll("#historical .province, #context .context-land.is-claimed")) {
     const on = active.has(shape.dataset.unit);
     shape.classList.toggle("is-dim", dim && !on);
     shape.classList.toggle("is-selected", on && (state.selectedUnitId || state.hoverUnitId));
@@ -408,7 +435,8 @@ function mateText(unit, adcode) {
 }
 
 function unitRow(unit) {
-  const names = unitCodes(unit).map((code) => provinceByCode(code).name).join("、");
+  const lands = [...new Set((unit.lands || []).map((name) => LAND_LABEL[name] || name))];
+  const names = [...unitCodes(unit).map((code) => provinceByCode(code).name), ...lands].join("、");
   return `
     <li>
       <button class="unit" type="button" data-unit="${esc(unit.id)}">
@@ -438,7 +466,9 @@ function drawContextLabels() {
   const layer = svg.querySelector("#context-labels");
   if (!layer) return;
   layer.replaceChildren();
+  const era = currentEra();
   for (const place of CONTEXT_PLACES) {
+    if (place.land && landUnit(era, place.land)) continue;
     const projected = projection([place.lon, place.lat]);
     if (!projected) continue;
     const label = el("text");
@@ -609,7 +639,7 @@ function onMapClick(event) {
     suppressClick = false;
     return;
   }
-  const shape = event.target.closest(".province");
+  const shape = event.target.closest(".province, .context-land.is-claimed");
   if (!shape) {
     state.selectedAdcode = null;
     state.selectedUnitId = null;
@@ -619,7 +649,7 @@ function onMapClick(event) {
     paintInteraction();
     return;
   }
-  state.selectedAdcode = Number(shape.dataset.adcode);
+  state.selectedAdcode = shape.dataset.adcode ? Number(shape.dataset.adcode) : null;
   state.selectedUnitId = shape.dataset.unit;
   state.query = "";
   searchInput.value = "";
@@ -634,20 +664,28 @@ function onPointerDown(event) {
 }
 
 function onPointerMove(event) {
-  const shape = event.target.closest(".province");
+  const shape = event.target.closest(".province, .context-land.is-claimed");
   const dot = event.target.closest(".qin-point");
   if (dot) {
     showTooltip(event, `<strong>${esc(dot.dataset.name)}</strong><p>${esc(dot.dataset.seat)}${dot.dataset.note ? `。${esc(dot.dataset.note)}` : ""}</p>`);
   } else if (shape && !drag?.moved) {
-    const code = Number(shape.dataset.adcode);
-    const province = provinceByCode(code);
     const unit = currentEra().units.find((item) => item.id === shape.dataset.unit);
-    const where = shape.dataset.where === "north" ? "北部" : shape.dataset.where === "south" ? "南部" : "";
-    const mates = unitCodes(unit).map((item) => provinceByCode(item).name).join("、");
-    const realm = state.showRealm && unit.realm ? `${unit.realm} · ` : "";
-    showTooltip(event, `<strong>${esc(province.full)}${where ? `（${where}）` : ""}</strong><p>${esc(currentEra().dynasty)} · ${esc(realm)}${esc(unit.name)}</p><p>今日範圍對應：${esc(mates)}</p>${unit.note ? `<p>${esc(unit.note)}</p>` : ""}`);
-    state.hoverUnitId = unit.id;
-    paintInteraction();
+    if (!shape.dataset.adcode) {
+      const place = LAND_LABEL[shape.dataset.name] || shape.dataset.name;
+      const realm = state.showRealm && unit.realm ? `${unit.realm} · ` : "";
+      showTooltip(event, `<strong>${esc(place)}</strong><p>${esc(currentEra().dynasty)} · ${esc(realm)}${esc(unit.name)}</p>${unit.note ? `<p>${esc(unit.note)}</p>` : ""}`);
+      state.hoverUnitId = unit.id;
+      paintInteraction();
+    } else {
+      const code = Number(shape.dataset.adcode);
+      const province = provinceByCode(code);
+      const where = shape.dataset.where === "north" ? "北部" : shape.dataset.where === "south" ? "南部" : "";
+      const mates = unitCodes(unit).map((item) => provinceByCode(item).name).join("、");
+      const realm = state.showRealm && unit.realm ? `${unit.realm} · ` : "";
+      showTooltip(event, `<strong>${esc(province.full)}${where ? `（${where}）` : ""}</strong><p>${esc(currentEra().dynasty)} · ${esc(realm)}${esc(unit.name)}</p><p>今日範圍對應：${esc(mates)}</p>${unit.note ? `<p>${esc(unit.note)}</p>` : ""}`);
+      state.hoverUnitId = unit.id;
+      paintInteraction();
+    }
   } else if (!drag) {
     hideTooltip();
     if (state.hoverUnitId) {
@@ -804,7 +842,8 @@ function filterUnits(era, query) {
   if (!query) return era.units;
   return era.units.filter((unit) => {
     const modern = unitCodes(unit).map((code) => provinceByCode(code).name).join("");
-    return `${unit.name}${unit.short || ""}${unit.note || ""}${unit.realm || ""}${modern}`.includes(query);
+    const lands = (unit.lands || []).map((name) => LAND_LABEL[name] || "").join("");
+    return `${unit.name}${unit.short || ""}${unit.note || ""}${unit.realm || ""}${modern}${lands}`.includes(query);
   });
 }
 
@@ -813,7 +852,7 @@ function eraWithQuery(query, exceptId) {
 }
 
 function disclaimer() {
-  return `<p class="disclaimer">預設畫的是當時政區。淮河、白溝、雁門、秦嶺會把今日的省切開，仍然是示意，不是實測疆界。周圍淺色土地係今日海岸同鄰區，方便睇範圍，唔係當時疆界。按「今省界」才疊上現代省界。按「成個國」把同一政權收成一整塊。郡治位置是約數。海南遠海島嶼沒有畫入，避免地圖被拉扁。</p>`;
+  return `<p class="disclaimer">預設畫的是當時政區。淮河、白溝、雁門、秦嶺會把今日的省切開，仍然是示意，不是實測疆界。周圍淺色土地係今日海岸。蒙古、越南、朝鮮、日本會按該時代上色，形狀仍是今日國界，不是實測疆界。中亞同西伯利亞沒有塗成任何朝代的領土。按「今省界」才疊上現代省界。按「成個國」把同一政權收成一整塊。郡治位置是約數。海南遠海島嶼沒有畫入，避免地圖被拉扁。</p>`;
 }
 
 function swatchStyle(era, unit) {
@@ -863,6 +902,10 @@ function clipGeometry(geometry) {
 function anchorOf(units) {
   const ids = new Set(units.map((unit) => unit.id));
   const geometries = pieces.filter((piece) => ids.has(piece.unitId)).map((piece) => piece.feature.geometry);
+  for (const feature of contextFeatures) {
+    const unit = landUnit(currentEra(), feature.properties.name);
+    if (unit && ids.has(unit.id)) geometries.push(feature.geometry);
+  }
   if (!geometries.length) return null;
   const geometry = geometries.length === 1
     ? geometries[0]
